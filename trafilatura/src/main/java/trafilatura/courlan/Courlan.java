@@ -404,9 +404,61 @@ public final class Courlan {
         return NOTCRAWLABLE.matcher(url).find();
     }
 
-    /** Language heuristics in URLs are not ported: every URL passes. */
+    private static final Pattern PATH_LANG_FILTER = Pattern.compile(
+            "(?:https?://[^/]+/)([a-z]{2})([_-][a-z]{2,3})?(?:/|$)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ALL_PATH_LANGS = Pattern.compile("(?:/)([a-z]{2})([_-][a-z]{2})?(?:/)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ALL_PATH_LANGS_NO_TRAILING = Pattern.compile(
+            "(?:/)([a-z]{2})([_-][a-z]{2})?(?:/|$)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern HOST_LANG_FILTER = Pattern.compile(
+            "https?://([a-z]{2})\\.(?:[^.]{4,})\\.(?:[^.]+)(?:\\.[^.]+)?/", Pattern.CASE_INSENSITIVE);
+    private static final Set<String> ISO_LANGUAGES = Set.of(java.util.Locale.getISOLanguages());
+
+    /** Assess the plausibility of the chosen URL segment (babel's Locale.parse replaced by the ISO 639 list). */
+    static int langcodes_score(String language, String segment, int score) {
+        String code = segment.toLowerCase(Locale.ROOT);
+        if (!ISO_LANGUAGES.contains(code)) {
+            // UnknownLocaleError: no change
+            return score;
+        }
+        return code.equals(language) ? score + 1 : score - 1;
+    }
+
+    private static int count(Pattern pattern, String s) {
+        Matcher m = pattern.matcher(s);
+        int n = 0;
+        while (m.find()) {
+            n++;
+        }
+        return n;
+    }
+
+    /** Heuristics targeting internationalization and linguistic elements based on a score. */
     public static boolean lang_filter(String url, String language, boolean strict, boolean trailing_slash) {
-        return true;
+        // sanity check
+        if (language == null) {
+            return true;
+        }
+        int score = 0;
+        // first test: internationalization in URL path
+        Matcher match = PATH_LANG_FILTER.matcher(url);
+        if (match.lookingAt()) {
+            // look for other occurrences
+            int occurrences = count(trailing_slash ? ALL_PATH_LANGS : ALL_PATH_LANGS_NO_TRAILING, url);
+            if (occurrences == 1) {
+                score = langcodes_score(language, match.group(1), score);
+            }
+            // two occurrences: courlan passes the findall() tuples to babel, which rejects them (no change);
+            // more than two candidates: no test
+        }
+        // second test: prepended language cues
+        if (strict) {
+            Matcher host = HOST_LANG_FILTER.matcher(url);
+            if (host.lookingAt()) {
+                score += host.group(1).toLowerCase(Locale.ROOT).equals(language) ? 1 : -1;
+            }
+        }
+        // determine test result
+        return score >= 0;
     }
 
     public static boolean lang_filter(String url, String language) {

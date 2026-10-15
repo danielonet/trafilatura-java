@@ -230,6 +230,15 @@ public final class Cli {
         return args;
     }
 
+    /**
+     * {@code main()} with {@code sys.argv}: the first element is the program name.
+     * Errors and non-zero exit codes are raised as {@link SystemExit}.
+     */
+    public static void main_argv(List<String> argv) {
+        Args args = parse_args(argv.subList(1, argv.size()));
+        process_args(args);
+    }
+
     /** Run as a command-line utility. */
     public static void main(String[] argv) {
         // the simple logger reads its level once, before the first logger is created
@@ -237,8 +246,9 @@ public final class Cli {
         for (String arg : argv) {
             if (arg.equals("--verbose") || arg.equals("-v")) {
                 verbosity++;
-            } else if (arg.matches("-v+")) {
-                verbosity += arg.length() - 1;
+            } else if (arg.matches("-[A-Za-z]+") && "iuob".indexOf(arg.charAt(1)) < 0) {
+                // clusters of short flags such as -vv or -fvv (but not -i/-u/-o/-b with an inline value)
+                verbosity += (int) arg.chars().filter(c -> c == 'v').count();
             }
         }
         configure_logging(verbosity);

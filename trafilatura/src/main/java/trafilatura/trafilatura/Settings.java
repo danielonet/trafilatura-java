@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -441,7 +442,8 @@ public final class Settings {
     public static final int LRU_SIZE = 4096;
 
     // Files
-    public static final int MAX_FILES_PER_DIRECTORY = 1000;
+    // module-level setting, overridden by the CLI tests
+    public static int MAX_FILES_PER_DIRECTORY = 1000;
     public static final int FILENAME_LEN = 8;
 
     // Network
@@ -455,7 +457,8 @@ public final class Settings {
             "main", "p", "pre", "q", "section", "span", "strong");
 
     // order could matter, using lists to keep extraction deterministic
-    public static final List<String> MANUALLY_CLEANED = List.of(
+    // a mutable list as in Python, where callers may adjust it
+    public static final List<String> MANUALLY_CLEANED = new ArrayList<>(List.of(
             // important
             "aside", "embed", "fencedframe", "footer", "form", "head", "iframe", "menu", "object", "script",
             // other content
@@ -464,7 +467,7 @@ public final class Settings {
             "area", "blink", "button", "datalist", "dialog", "frame", "frameset", "fieldset", "link", "input",
             "label", "legend", "marquee", "math", "menuitem", "nav", "noindex", "noscript", "optgroup", "option",
             "output", "param", "progress", "rp", "rt", "rtc", "select", "source", "style", "track", "textarea",
-            "time", "use");
+            "time", "use"));
     // 'meta', 'hr', 'img', 'data', 'details', 'summary'
 
     public static final List<String> MANUALLY_STRIPPED = List.of(

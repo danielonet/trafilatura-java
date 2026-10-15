@@ -53,7 +53,7 @@ public final class JsonMetadata {
     public static final Pattern JSON_AUTHOR_1 = Pattern.compile(
             "\"author\":[^}\\[]+?\"name?\\\\?\": ?\\\\?\"([^\"\\\\]+)|\"author\"[^}\\[]+?\"names?\".+?\"([^\"]+)", Pattern.DOTALL);
     public static final Pattern JSON_AUTHOR_2 = Pattern.compile("\"[Pp]erson\"[^}]+?\"names?\".+?\"([^\"]+)", Pattern.DOTALL);
-    public static final Pattern JSON_AUTHOR_REMOVE = Pattern.compile(
+    public static final Pattern JSON_AUTHOR_REMOVE = Re.compile(
             ",?(?:\"\\w+\":?[:|,\\[])?\\{?\"@type\":\"(?:[Ii]mageObject|[Oo]rganization|[Ww]eb[Pp]age)\",[^}\\[]+}[\\]|}]?", U);
     public static final Pattern JSON_PUBLISHER = Pattern.compile("\"publisher\":[^}]+?\"name?\\\\?\": ?\\\\?\"([^\"\\\\]+)", Pattern.DOTALL);
     public static final Pattern JSON_TYPE = Pattern.compile("\"@type\"\\s*:\\s*\"([^\"]*)\"", Pattern.DOTALL | U);
@@ -71,14 +71,14 @@ public final class JsonMetadata {
     public static final Pattern AUTHOR_PREFIX = Pattern.compile(
             "^([a-zäöüß]+(ed|t))? ?(written by|words by|words|by|von|from) ", I);
     public static final Pattern AUTHOR_REMOVE_NUMBERS = Pattern.compile("\\d.+?$", U);
-    public static final Pattern AUTHOR_TWITTER = Pattern.compile("@[\\w]+", U);
+    public static final Pattern AUTHOR_TWITTER = Re.compile("@[\\w]+", U);
     public static final Pattern AUTHOR_REPLACE_JOIN = Pattern.compile("[._+]");
     public static final Pattern AUTHOR_REMOVE_NICKNAME = Pattern.compile("[\"‘({\\[’'][^\"]+?[‘’\"')\\]}]");
-    public static final Pattern AUTHOR_REMOVE_SPECIAL = Pattern.compile("[^\\w]+$|[:()?*$#!%/<>{}~¿]", U);
+    public static final Pattern AUTHOR_REMOVE_SPECIAL = Re.compile("[^\\w]+$|[:()?*$#!%/<>{}~¿]", U);
     public static final Pattern AUTHOR_REMOVE_PREPOSITION = Pattern.compile(
             "\\b\\s+(am|on|for|at|in|to|from|of|via|with|—|-|–)\\s+(.*)", I | U);
     public static final Pattern AUTHOR_EMAIL = Pattern.compile("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b", U);
-    public static final Pattern AUTHOR_SPLIT = Pattern.compile("/|;|,|\\||&|(?:^|\\W)[ua]nd(?:$|\\W)", I | U);
+    public static final Pattern AUTHOR_SPLIT = Re.compile("/|;|,|\\||&|(?:^|\\W)[ua]nd(?:$|\\W)", I | U);
     public static final Pattern AUTHOR_EMOJI_REMOVE = Pattern.compile(
             "["
                     + "\\x{2700}-\\x{27be}" // Dingbats
@@ -281,8 +281,11 @@ public final class JsonMetadata {
             }
         }
 
-        return process_parent(parents, metadata);
+        return PROCESS_PARENT.apply(parents, metadata);
     }
+
+    /** process_parent() as called by extract_json(): replaceable in tests. */
+    public static java.util.function.BiFunction<List<Object>, Document, Document> PROCESS_PARENT = JsonMetadata::process_parent;
 
     /** Crudely extract author names from JSON-LD data. */
     public static String extract_json_author(String elemtext, Pattern regular_expression) {

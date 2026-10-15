@@ -21,7 +21,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 
 import org.mozilla.universalchardet.UniversalDetector;
@@ -134,11 +133,11 @@ public final class Utils {
     public static final Pattern RE_HTML_LANG = Pattern.compile("([a-z]{2})");
 
     // Mostly filters for social media (text-level analog of the xpaths social/share tokens)
-    public static final Pattern RE_FILTER = Pattern.compile(
+    public static final Pattern RE_FILTER = Re.compile(
             "\\W*(Drucken|E-?Mail|Facebook|Flipboard|Google|Instagram|"
                     + "Linkedin|Mail|PDF|Pinterest|Pocket|Print|QQ|Reddit|Twitter|"
                     + "WeChat|WeiBo|Whatsapp|Xing|Mehr zum Thema:?|More on this.{0,8}$)$",
-            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS);
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     // link text > this fraction of total text = link farm (htmlprocessing.link_density_test)
     public static final double LINK_FARM_RATIO = 0.9;
 
@@ -171,12 +170,92 @@ public final class Utils {
         return out.toByteArray();
     }
 
-    /** Decompress a (possibly multi-member) gzip stream, rejecting output over max_size. */
-    public static byte[] _bounded_gunzip(byte[] raw, int max_size) throws IOException {
-        // GZIPInputStream reads concatenated members; an incomplete member raises EOFException
-        try (GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(raw))) {
-            return _bounded_read(in, max_size);
+    /** Length of the gzip member header starting at {@code pos}, checking the magic number. */
+    private static int gzipHeaderLength(byte[] raw, int pos) throws java.util.zip.ZipException {
+        if (raw.length - pos < 10 || (raw[pos] & 0xff) != 0x1f || (raw[pos + 1] & 0xff) != 0x8b || raw[pos + 2] != 8) {
+            throw new java.util.zip.ZipException("not a gzip member");
         }
+        int flags = raw[pos + 3] & 0xff;
+        int i = pos + 10;
+        if ((flags & 4) != 0) { // FEXTRA
+            if (i + 2 > raw.length) {
+                throw new java.util.zip.ZipException("truncated header");
+            }
+            i += 2 + ((raw[i] & 0xff) | (raw[i + 1] & 0xff) << 8);
+        }
+        for (int bit : new int[] {8, 16}) { // FNAME, FCOMMENT: zero-terminated
+            if ((flags & bit) != 0) {
+                while (i < raw.length && raw[i] != 0) {
+                    i++;
+                }
+                i++;
+            }
+        }
+        if ((flags & 2) != 0) { // FHCRC
+            i += 2;
+        }
+        if (i > raw.length) {
+            throw new java.util.zip.ZipException("truncated header");
+        }
+        return i - pos;
+    }
+
+    /**
+     * Decompress a concatenated multi-member gzip stream, rejecting output over max_size,
+     * incomplete streams and more than MAX_MEMBERS members (NUL padding between members is skipped).
+     */
+    static byte[] _bounded_gunzip(byte[] raw, int max_size) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        int pos = 0;
+        for (int member = 0; member < MAX_MEMBERS; member++) {
+            pos += gzipHeaderLength(raw, pos);
+            Inflater inflater = new Inflater(true);
+            java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+            long memberSize = 0;
+            try {
+                inflater.setInput(raw, pos, raw.length - pos);
+                byte[] buffer = new byte[65536];
+                while (!inflater.finished()) {
+                    int n;
+                    try {
+                        n = inflater.inflate(buffer);
+                    } catch (DataFormatException err) {
+                        throw new java.util.zip.ZipException(err.getMessage());
+                    }
+                    if (n == 0 && (inflater.needsInput() || inflater.needsDictionary())) {
+                        throw new IllegalArgumentException("oversized or incomplete compressed stream");
+                    }
+                    out.write(buffer, 0, n);
+                    crc.update(buffer, 0, n);
+                    memberSize += n;
+                    // single capped pass: the cap applies to the output, as decompress(raw, max_size + 1)
+                    if (out.size() > max_size) {
+                        throw new IllegalArgumentException("oversized or incomplete compressed stream");
+                    }
+                }
+                pos = raw.length - inflater.getRemaining();
+            } finally {
+                inflater.end();
+            }
+            // trailer: CRC32 and size, little endian
+            if (pos + 8 > raw.length) {
+                throw new IllegalArgumentException("oversized or incomplete compressed stream");
+            }
+            long storedCrc = (raw[pos] & 0xffL) | (raw[pos + 1] & 0xffL) << 8 | (raw[pos + 2] & 0xffL) << 16 | (raw[pos + 3] & 0xffL) << 24;
+            long storedSize = (raw[pos + 4] & 0xffL) | (raw[pos + 5] & 0xffL) << 8 | (raw[pos + 6] & 0xffL) << 16 | (raw[pos + 7] & 0xffL) << 24;
+            if (storedCrc != crc.getValue() || storedSize != (memberSize & 0xffffffffL)) {
+                throw new java.util.zip.ZipException("CRC check failed");
+            }
+            pos += 8;
+            // NUL padding as gzip.decompress
+            while (pos < raw.length && raw[pos] == 0) {
+                pos++;
+            }
+            if (pos >= raw.length) {
+                return out.toByteArray();
+            }
+        }
+        throw new IllegalArgumentException("too many compressed members");
     }
 
     /** Decompress a single zlib/deflate stream, ignoring trailing bytes as zlib.decompress does. */
@@ -606,12 +685,13 @@ public final class Utils {
         return new Iterator<>() {
             @Override
             public boolean hasNext() {
-                return iterator.hasNext();
+                // islice(iterator, n) with n < 1 is empty, which ends the loop at once
+                return n > 0 && iterator.hasNext();
             }
 
             @Override
             public List<T> next() {
-                if (!iterator.hasNext()) {
+                if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
                 List<T> batch = new ArrayList<>(n);

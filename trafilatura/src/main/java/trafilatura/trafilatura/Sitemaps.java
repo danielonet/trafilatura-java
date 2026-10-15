@@ -22,10 +22,7 @@ import trafilatura.lxml.Element;
 import trafilatura.lxml.Etree;
 
 import static trafilatura.trafilatura.Deduplication.is_similar_domain;
-import static trafilatura.trafilatura.Downloads.fetch_url;
-import static trafilatura.trafilatura.Downloads.is_live_page;
 import static trafilatura.trafilatura.Settings.DEFAULT_CONFIG;
-import static trafilatura.trafilatura.Settings.MAX_LINKS;
 import static trafilatura.trafilatura.Settings.MAX_SITEMAPS_SEEN;
 import static trafilatura.trafilatura.Utils.safe_relative_url;
 
@@ -36,18 +33,33 @@ public final class Sitemaps {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Sitemaps.class);
 
+    /** Module-level references, replaceable in tests like the Python module attributes. */
+    public static java.util.function.BiFunction<String, ConfigParser, String> FETCH_URL = Downloads::fetch_url;
+    public static java.util.function.BiPredicate<String, ConfigParser> IS_LIVE_PAGE = Downloads::is_live_page;
+    public static int MAX_LINKS = Settings.MAX_LINKS;
+
+    static String fetch_url(String url, ConfigParser config) {
+        return FETCH_URL.apply(url, config);
+    }
+
+    static boolean is_live_page(String url, ConfigParser config) {
+        return IS_LIVE_PAGE.test(url, config);
+    }
+
     public static final String SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9";
     public static final Pattern XHTML_REGEX = Pattern.compile("<xhtml:link.+?>", Pattern.DOTALL);
     public static final Pattern HREFLANG_REGEX = Pattern.compile("href=[\"'](.+?)[\"']");
     public static final Pattern WHITELISTED_PLATFORMS = Pattern.compile(
             "(?:blogger|blogpost|ghost|hubspot|livejournal|medium|typepad|squarespace|tumblr|weebly|wix|wordpress)\\.");
 
-    public static final Pattern SITEMAP_FORMAT = Pattern.compile(
-            "^.{0,5}<\\?xml|<(?:[\\w.-]+:)?(?:sitemapindex|sitemap|urlset)\\b", Pattern.UNICODE_CHARACTER_CLASS);
+    public static final Pattern SITEMAP_FORMAT = Re.compile(
+            "^.{0,5}<\\?xml|<(?:[\\w.-]+:)?(?:sitemapindex|sitemap|urlset)\\b");
     public static final Pattern DETECT_SITEMAP_LINK = Pattern.compile("\\.xml(\\..{2,4})?$|\\.xml[?#]");
     public static final Pattern DETECT_LINKS = Pattern.compile("https?://[^\\s<\"]+");
     public static final Pattern SCRUB_REGEX = Pattern.compile("\\?.*$|#.*$");
     public static final Pattern POTENTIAL_SITEMAP = Pattern.compile("\\.xml\\b"); // |\bsitemap\b
+
+    static final Pattern UNRESOLVED_ENTITY = Pattern.compile("&[A-Za-z_][\\w.-]*;");
 
     public static final List<String> GUESSES = List.of(
             "sitemap.xml", "sitemap.xml.gz", "sitemap", "sitemap_index.xml", "sitemap_news.xml");
@@ -184,7 +196,9 @@ public final class Sitemaps {
                 }
                 count++;
                 // Entity references and nested markup are not part of a location URL.
-                if (element.size() == 0 && Py.truthy(element.text) && element.text.startsWith("http")) {
+                // (lxml keeps an unresolved entity as a child node; the lenient parser leaves it as "&name;" text)
+                if (element.size() == 0 && Py.truthy(element.text) && element.text.startsWith("http")
+                        && !UNRESOLVED_ENTITY.matcher(element.text).find()) {
                     this.handle_link(element.text);
                 }
             }

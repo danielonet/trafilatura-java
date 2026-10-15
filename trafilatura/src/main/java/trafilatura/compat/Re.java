@@ -12,6 +12,47 @@ public final class Re {
     private Re() {
     }
 
+    /** Python's \\w: letters, digits (str.isalnum) and underscore, without the combining marks Java adds. */
+    static final String WORD = "\\p{L}\\p{N}_";
+
+    /**
+     * {@code re.compile(pattern, flags)} for a Python str pattern: \\w and \\W follow Python's
+     * definition and \\b, \\d, \\s are Unicode-aware, as in Python 3.
+     */
+    public static Pattern compile(String pattern, int flags) {
+        StringBuilder sb = new StringBuilder();
+        boolean inClass = false;
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (c == '\\' && i + 1 < pattern.length()) {
+                char n = pattern.charAt(i + 1);
+                if (n == 'w') {
+                    sb.append(inClass ? WORD : "[" + WORD + "]");
+                } else if (n == 'W') {
+                    if (inClass) {
+                        throw new IllegalArgumentException("\\W inside a character class is not supported: " + pattern);
+                    }
+                    sb.append("[^" + WORD + "]");
+                } else {
+                    sb.append(c).append(n);
+                }
+                i++;
+                continue;
+            }
+            if (c == '[' && !inClass) {
+                inClass = true;
+            } else if (c == ']' && inClass && sb.length() > 0 && sb.charAt(sb.length() - 1) != '[') {
+                inClass = false;
+            }
+            sb.append(c);
+        }
+        return Pattern.compile(sb.toString(), flags | Pattern.UNICODE_CHARACTER_CLASS);
+    }
+
+    public static Pattern compile(String pattern) {
+        return compile(pattern, 0);
+    }
+
     /** {@code pattern.match(s)}: anchored at the start, null when there is no match. */
     public static Matcher match(Pattern pattern, String s) {
         Matcher m = pattern.matcher(s);

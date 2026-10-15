@@ -51,12 +51,10 @@ import static trafilatura.trafilatura.Baseline.html2txt;
 import static trafilatura.trafilatura.Deduplication.generate_bow_hash;
 import static trafilatura.trafilatura.Downloads.add_to_compressed_dict;
 import static trafilatura.trafilatura.Downloads.buffered_downloads;
-import static trafilatura.trafilatura.Downloads.buffered_response_downloads;
 import static trafilatura.trafilatura.Downloads.load_download_buffer;
 import static trafilatura.trafilatura.Feeds.find_feed_urls;
 import static trafilatura.trafilatura.Meta.reset_caches;
 import static trafilatura.trafilatura.Settings.FILENAME_LEN;
-import static trafilatura.trafilatura.Settings.MAX_FILES_PER_DIRECTORY;
 import static trafilatura.trafilatura.Settings.args_to_extractor;
 import static trafilatura.trafilatura.Sitemaps.sitemap_search;
 import static trafilatura.trafilatura.Utils.LANGID_FLAG;
@@ -73,6 +71,17 @@ public final class CliUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(CliUtils.class);
 
     public static final boolean HAS_GZIP = true;
+
+    /** Extraction function used by examine(): replaceable in tests, like monkeypatching cli_utils.extract. */
+    public static java.util.function.BiFunction<Object, Extractor, String> EXTRACT =
+            (htmlstring, options) -> Core.extract(htmlstring, Core.kw().options(options));
+
+    /** Crawler download source (bufferlist, threads, options): replaceable in tests. */
+    public interface ResponseDownloads {
+        Iterator<Pair<String, Response>> download(List<String> bufferlist, int download_threads, Extractor options);
+    }
+
+    public static ResponseDownloads BUFFERED_RESPONSE_DOWNLOADS = Downloads::buffered_response_downloads;
 
     // make generated file names reproducible (not the same sequence as Python's random module)
     public static final Random RANDOM = new Random(345);
@@ -179,7 +188,7 @@ public final class CliUtils {
         if (c < 0) {
             return dirname;
         }
-        return join(dirname, String.valueOf(c / MAX_FILES_PER_DIRECTORY + 1));
+        return join(dirname, String.valueOf(c / Settings.MAX_FILES_PER_DIRECTORY + 1));
     }
 
     /** Find a writable path and return it along with its random file name. */
@@ -480,7 +489,7 @@ public final class CliUtils {
         while (!Spider.URL_STORE.done) {
             Pair<List<String>, UrlStore> buffer = load_download_buffer(Spider.URL_STORE, sleep_time);
             Spider.URL_STORE = buffer.second();
-            Iterator<Pair<String, Response>> results = buffered_response_downloads(buffer.first(), args.parallel, options);
+            Iterator<Pair<String, Response>> results = BUFFERED_RESPONSE_DOWNLOADS.download(buffer.first(), args.parallel, options);
             while (results.hasNext()) {
                 Pair<String, Response> item = results.next();
                 if (item.second() != null && item.second().isTruthy()) {
@@ -553,7 +562,7 @@ public final class CliUtils {
 
         Extractor options = args_to_extractor(args);
         int url_count = url_store.total_url_number();
-        int counter = url_count > MAX_FILES_PER_DIRECTORY ? 0 : -1;
+        int counter = url_count > Settings.MAX_FILES_PER_DIRECTORY ? 0 : -1;
 
         // download strategy
         Pair<List<String>, Integer> processed = download_queue_processing(url_store, args, counter, options);
@@ -588,10 +597,10 @@ public final class CliUtils {
         ExecutorService executor = Executors.newFixedThreadPool(Math.max(1, args.parallel));
         try {
             // chunk input: https://github.com/python/cpython/issues/74028
-            Iterator<List<String>> batches = make_chunks(generate_filelist(args.input_dir), MAX_FILES_PER_DIRECTORY);
+            Iterator<List<String>> batches = make_chunks(generate_filelist(args.input_dir), Settings.MAX_FILES_PER_DIRECTORY);
             while (batches.hasNext()) {
                 List<String> filebatch = batches.next();
-                if (filecounter < 0 && filebatch.size() >= MAX_FILES_PER_DIRECTORY) {
+                if (filecounter < 0 && filebatch.size() >= Settings.MAX_FILES_PER_DIRECTORY) {
                     filecounter = 0;
                 }
                 int counter = filecounter;
@@ -627,12 +636,13 @@ public final class CliUtils {
         // safety check
         if (htmlstring == null) {
             System.err.print("ERROR: empty document\n");
-        } else if (!is_acceptable_length(htmlstring instanceof byte[] b ? b.length : ((String) htmlstring).length(), options)) {
+        } else if (!is_acceptable_length(htmlstring instanceof byte[] b ? b.length
+                : htmlstring instanceof java.util.Collection<?> c ? c.size() : ((String) htmlstring).length(), options)) {
             System.err.print("ERROR: file size\n");
         } else {
             // proceed
             try {
-                result = Core.extract(htmlstring, Core.kw().options(options));
+                result = EXTRACT.apply(htmlstring, options);
             } catch (RuntimeException err) {
                 // ugly but efficient
                 StringWriter trace = new StringWriter();

@@ -64,7 +64,7 @@ public final class Downloads {
     private static final Logger LOGGER = LoggerFactory.getLogger(Downloads.class);
 
     // SOCKS proxies (urllib3.contrib.socks) are not supported by java.net.http
-    public static final String PROXY_URL = System.getenv("http_proxy");
+    public static String PROXY_URL = System.getenv("http_proxy");
     // pycurl is an optional dependency of the Python package, not available here
     public static final boolean HAS_PYCURL = false;
 
@@ -97,7 +97,8 @@ public final class Downloads {
     public static final String USER_AGENT = "trafilatura/" + TrafilaturaInit.__version__ + " (+https://github.com/adbar/trafilatura)";
 
     static {
-        DEFAULT_HEADERS.put("Accept-Encoding", "gzip,deflate");
+        // urllib3.util.make_headers(accept_encoding=True): lowercase key
+        DEFAULT_HEADERS.put("accept-encoding", "gzip,deflate");
         DEFAULT_HEADERS.put("User-Agent", USER_AGENT);
     }
 
@@ -288,14 +289,18 @@ public final class Downloads {
         return Math.min(MAX_BACKOFF, backoff_factor * Math.pow(2, consecutive - 1));
     }
 
-    private static void sleepSeconds(double seconds) {
-        if (seconds <= 0) {
-            return;
-        }
+    /** time.sleep() for retries and download buffers: replaceable in tests. */
+    public static java.util.function.DoubleConsumer SLEEP = seconds -> {
         try {
             Thread.sleep((long) (seconds * 1000));
         } catch (InterruptedException err) {
             Thread.currentThread().interrupt();
+        }
+    };
+
+    private static void sleepSeconds(double seconds) {
+        if (seconds > 0) {
+            SLEEP.accept(seconds);
         }
     }
 

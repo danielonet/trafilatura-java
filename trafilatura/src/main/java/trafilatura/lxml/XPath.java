@@ -8,15 +8,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-import org.jaxen.BaseXPath;
 import org.jaxen.Context;
+import org.jaxen.ContextSupport;
 import org.jaxen.DefaultNavigator;
 import org.jaxen.Function;
 import org.jaxen.FunctionCallException;
 import org.jaxen.JaxenException;
+import org.jaxen.JaxenHandler;
 import org.jaxen.SimpleNamespaceContext;
+import org.jaxen.SimpleVariableContext;
 import org.jaxen.XPathFunctionContext;
+import org.jaxen.expr.XPathExpr;
 import org.jaxen.function.StringFunction;
+import org.jaxen.saxpath.XPathReader;
+import org.jaxen.saxpath.helpers.XPathReaderFactory;
 import org.jaxen.util.SingleObjectIterator;
 
 /**
@@ -35,7 +40,8 @@ public final class XPath {
     }
 
     private final String expression;
-    private final BaseXPath compiled;
+    private final XPathExpr compiled;
+    private final ContextSupport support;
 
     public XPath(String expression) {
         this(expression, null);
@@ -45,8 +51,14 @@ public final class XPath {
     public XPath(String expression, Map<String, String> namespaces) {
         this.expression = expression;
         try {
-            this.compiled = new BaseXPath(expression, TreeNavigator.INSTANCE);
-        } catch (JaxenException err) {
+            // as BaseXPath, with location paths and unions sorted by DocumentOrder
+            JaxenHandler handler = new JaxenHandler();
+            handler.setXPathFactory(new DocumentOrder.Factory());
+            XPathReader reader = XPathReaderFactory.createReader();
+            reader.setXPathHandler(handler);
+            reader.parse(expression);
+            this.compiled = handler.getXPathExpr();
+        } catch (org.jaxen.saxpath.SAXPathException err) {
             throw new IllegalArgumentException("Invalid expression: " + expression, err);
         }
         SimpleNamespaceContext ns = new SimpleNamespaceContext();
@@ -54,8 +66,14 @@ public final class XPath {
         if (namespaces != null) {
             namespaces.forEach(ns::addNamespace);
         }
-        compiled.setNamespaceContext(ns);
-        compiled.setFunctionContext(FUNCTIONS);
+        this.support = new ContextSupport(ns, FUNCTIONS, new SimpleVariableContext(), TreeNavigator.INSTANCE);
+    }
+
+    /** {@code BaseXPath.selectNodesForContext()} */
+    private List<?> selectNodes(Object node) throws JaxenException {
+        Context context = new Context(support);
+        context.setNodeSet(Collections.singletonList(node));
+        return compiled.asList(context);
     }
 
     static XPath cached(String expression) {
@@ -94,7 +112,12 @@ public final class XPath {
     /** Raw result: a list of nodes (elements or strings), a String, a Double or a Boolean. */
     public Object eval(Element context) {
         try {
-            Object value = compiled.evaluate(context);
+            // BaseXPath.evaluate(): a single string, number or boolean is returned as such
+            Object value = selectNodes(context);
+            if (value instanceof List<?> single && single.size() == 1
+                    && (single.get(0) instanceof String || single.get(0) instanceof Number || single.get(0) instanceof Boolean)) {
+                value = single.get(0);
+            }
             if (value instanceof List<?> list) {
                 List<Object> converted = new ArrayList<>();
                 for (Object node : list) {
@@ -110,7 +133,7 @@ public final class XPath {
 
     private List<?> select(Element context) {
         try {
-            return compiled.selectNodes(context);
+            return selectNodes(context);
         } catch (JaxenException err) {
             throw new IllegalStateException("XPath evaluation failed: " + expression, err);
         }
@@ -261,7 +284,78 @@ public final class XPath {
 
         @Override
         public org.jaxen.XPath parseXPath(String xpath) throws org.jaxen.saxpath.SAXPathException {
-            return new BaseXPath(xpath, this);
+            return new org.jaxen.BaseXPath(xpath, this);
+        }
+
+        /**
+         * Lazy following-sibling axis starting at the node's own position: Jaxen sorts results in
+         * document order by walking this axis from one sibling to the other, so building the parent's
+         * whole child list on each comparison made sorting quadratic for long sibling runs.
+         */
+        @Override
+        public Iterator<?> getFollowingSiblingAxisIterator(Object node) {
+            Element parent;
+            int start;
+            boolean ownTail;
+            if (node instanceof Element e) {
+                if (e.parent == null) {
+                    return Collections.emptyIterator();
+                }
+                parent = e.parent;
+                start = parent.index(e);
+                ownTail = true;
+            } else if (node instanceof TextNode t && t.tail()) {
+                if (t.owner().parent == null) {
+                    return Collections.emptyIterator();
+                }
+                parent = t.owner().parent;
+                start = parent.index(t.owner());
+                ownTail = false;
+            } else if (node instanceof TextNode t) {
+                // the leading text of an element: its siblings are the element's children
+                parent = t.owner();
+                start = -1;
+                ownTail = false;
+            } else {
+                return Collections.emptyIterator();
+            }
+            final Element p = parent;
+            final int first = start;
+            return new Iterator<Object>() {
+                private int index = first;
+                // the tail text node of children[index] is still to be returned
+                private boolean tailPending = ownTail && first >= 0 && hasText(p.children.get(first).tail);
+                private Object nextNode = advance();
+
+                private Object advance() {
+                    if (tailPending) {
+                        tailPending = false;
+                        return new TextNode(p.children.get(index), true);
+                    }
+                    index++;
+                    if (index >= p.children.size()) {
+                        return null;
+                    }
+                    Element child = p.children.get(index);
+                    tailPending = hasText(child.tail);
+                    return child;
+                }
+
+                @Override
+                public boolean hasNext() {
+                    return nextNode != null;
+                }
+
+                @Override
+                public Object next() {
+                    if (nextNode == null) {
+                        throw new java.util.NoSuchElementException();
+                    }
+                    Object current = nextNode;
+                    nextNode = advance();
+                    return current;
+                }
+            };
         }
 
         @Override

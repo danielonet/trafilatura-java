@@ -36,6 +36,10 @@ public final class External {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(External.class);
 
+    /** justext_rescue as looked up by compare_extraction(): replaceable in tests, like monkeypatching the module attribute. */
+    public static java.util.function.BiFunction<Element, Extractor, Pair<Element, String>> JUSTEXT_RESCUE =
+            External::justext_rescue;
+
     public static Set<String> JT_STOPLIST = null;
 
     public static final String SANITIZED_XPATH = ".//aside|.//audio|.//button|.//fencedframe|.//fieldset|.//figure|.//footer|.//iframe|.//input|.//label|.//link|.//nav|.//noindex|.//noscript|.//object|.//option|.//select|.//source|.//svg|.//time";
@@ -123,7 +127,7 @@ public final class External {
         boolean unclean = !body.xpath(SANITIZED_XPATH).isEmpty();
         if (unclean || len_text < options.min_extracted_size) {
             LOGGER.debug("unclean or short document triggering justext examination: {}", options.source);
-            Pair<Element, String> rescued = justext_rescue(cleaned_tree, options);
+            Pair<Element, String> rescued = JUSTEXT_RESCUE.apply(cleaned_tree, options);
             Element body2 = rescued.first();
             String text2 = rescued.second();
             int len_text2 = text2.length();

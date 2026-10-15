@@ -64,8 +64,8 @@ public final class Feeds {
     public static final Pattern FEED_OPENING = Pattern.compile("<(feed|rss|\\?xml)");
 
     public static final Pattern LINK_ATTRS = Pattern.compile("<link\\s+(?:[^>\"']|\"[^\"]*\"|'[^']*')*[\"']?/?>");
-    public static final Pattern LINK_ATTRIBUTES = Pattern.compile("\\s([\\w:-]+)\\s*=\\s*([\"'])(.*?)\\2",
-            Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
+    public static final Pattern LINK_ATTRIBUTES = Re.compile("\\s([\\w:-]+)\\s*=\\s*([\"'])(.*?)\\2",
+            Pattern.DOTALL);
     public static final Pattern LINK_ELEMENTS = Pattern.compile("<link>(?:\\s*)(?:<!\\[CDATA\\[)?(.+?)(?:\\]\\]>)?(?:\\s*)</link>",
             Pattern.DOTALL);
 
@@ -381,6 +381,18 @@ public final class Feeds {
         return find_feed_urls(url, target_lang, false, 2.0, DEFAULT_CONFIG);
     }
 
+    /** find_feed_urls() as called by try_homepage(): replaceable in tests. */
+    @FunctionalInterface
+    public interface FeedFinder {
+        List<String> find(String url, String target_lang, boolean external, double sleep_time, ConfigParser config);
+    }
+
+    public static FeedFinder FIND_FEED_URLS = Feeds::find_feed_urls;
+
+    public static List<String> try_homepage(String baseurl, String target_lang, boolean external, double sleep_time) {
+        return try_homepage(baseurl, target_lang, external, sleep_time, DEFAULT_CONFIG);
+    }
+
     /**
      * Shift into reverse and try the homepage instead of the particular feed
      * page that was given as input.
@@ -388,6 +400,6 @@ public final class Feeds {
     public static List<String> try_homepage(String baseurl, String target_lang, boolean external, double sleep_time,
             ConfigParser config) {
         LOGGER.debug("Probing homepage for feeds instead: {}", baseurl);
-        return find_feed_urls(baseurl, target_lang, external, sleep_time, config);
+        return FIND_FEED_URLS.find(baseurl, target_lang, external, sleep_time, config);
     }
 }

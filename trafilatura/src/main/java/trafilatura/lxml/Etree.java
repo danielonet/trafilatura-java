@@ -36,14 +36,30 @@ public final class Etree {
 
     // ------------------------------------------------------------------ factories
 
+    private static final java.util.regex.Pattern VALID_TAG = java.util.regex.Pattern.compile(
+            "[\\p{L}_][\\p{L}\\p{N}\\p{Mn}\\p{Mc}._\\-\\u00B7]*");
+
+    /**
+     * lxml's _tagValidOrRaise: factories reject names that are not XML names or that hold a colon
+     * (the HTML parser itself accepts them, e.g. {@code <http:>} from a bare URL in angle brackets).
+     */
+    static void _tagValidOrRaise(String tag) {
+        String local = tag.startsWith("{") && tag.indexOf('}') > 0 ? tag.substring(tag.indexOf('}') + 1) : tag;
+        if (!VALID_TAG.matcher(local).matches()) {
+            throw new IllegalArgumentException("Invalid tag name '" + tag + "'");
+        }
+    }
+
     /** {@code Element(tag, **attrs)}: attributes given as alternating names and values. */
     public static Element Element(String tag, String... attributes) {
+        _tagValidOrRaise(tag);
         Element element = new Element(tag);
         setPairs(element, attributes);
         return element;
     }
 
     public static Element Element(String tag, Map<String, String> attrib) {
+        _tagValidOrRaise(tag);
         return new Element(tag, attrib);
     }
 
@@ -296,8 +312,28 @@ public final class Etree {
      * {@code lxml.html.fromstring}: returns the document root for full documents,
      * otherwise the single element passed in or a div/span container.
      */
+    // a fragment starting with a table part: libxml2 keeps it where it is, the HTML5 tree builder
+    // drops it outside a table unless the fragment is parsed in its context
+    private static final Pattern LEADING_TABLE_PART = Pattern.compile(
+            "^\\s*<(td|th|tr|thead|tbody|tfoot|caption|colgroup|col)[\\s/>]", Pattern.CASE_INSENSITIVE);
+    private static final Map<String, String> TABLE_PART_CONTEXT = Map.of(
+            "td", "tr", "th", "tr", "tr", "tbody", "thead", "table", "tbody", "table", "tfoot", "table",
+            "caption", "table", "colgroup", "table", "col", "colgroup");
+
     public static Element html_fromstring(String html) {
         boolean fullHtml = LOOKS_LIKE_FULL_HTML.matcher(html).find();
+        java.util.regex.Matcher tablePart = LEADING_TABLE_PART.matcher(html);
+        if (!fullHtml && tablePart.find()) {
+            String context = TABLE_PART_CONTEXT.get(tablePart.group(1).toLowerCase());
+            List<Node> nodes = org.jsoup.parser.Parser.parseFragment(html, new org.jsoup.nodes.Element(context), "");
+            org.jsoup.nodes.Element holder = new org.jsoup.nodes.Element("body");
+            for (Node node : nodes) {
+                holder.appendChild(node);
+            }
+            Element fragmentBody = convertHtml(holder);
+            new Element("html").append(fragmentBody);
+            return htmlFragmentResult(fragmentBody);
+        }
         Element doc = document_fromstring(html);
         if (fullHtml) {
             return doc;
@@ -306,6 +342,11 @@ public final class Etree {
         if (doc.find("head") != null || body == null) {
             return doc;
         }
+        return htmlFragmentResult(body);
+    }
+
+    /** lxml.html.fromstring on a fragment: the single element, else the body renamed to div or span. */
+    private static Element htmlFragmentResult(Element body) {
         if (body.size() == 1 && (body.text == null || body.text.isBlank())
                 && (body.get(-1).tail == null || body.get(-1).tail.isBlank())) {
             return body.get(0);

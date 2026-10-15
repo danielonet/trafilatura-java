@@ -50,6 +50,15 @@ final class T {
         return Py.count(s, sub);
     }
 
+    /** {@code sep.join(f(i) for i in range(start, stop))} */
+    static String joinRange(String sep, int start, int stop, java.util.function.IntFunction<String> f) {
+        List<String> parts = new ArrayList<>();
+        for (int i = start; i < stop; i++) {
+            parts.add(f.apply(i));
+        }
+        return String.join(sep, parts);
+    }
+
     static byte[] b(String s) {
         return s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }

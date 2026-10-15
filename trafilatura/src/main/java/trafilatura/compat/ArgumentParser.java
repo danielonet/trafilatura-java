@@ -217,9 +217,17 @@ public class ArgumentParser {
         List<String> unrecognized = new ArrayList<>();
 
         int i = 0;
-        while (i < args.size()) {
-            String token = args.get(i);
-            i++;
+        // rest of a cluster of short flags (-fvv: -f, then -vv, then -v)
+        String pending = null;
+        while (pending != null || i < args.size()) {
+            String token;
+            if (pending != null) {
+                token = pending;
+                pending = null;
+            } else {
+                token = args.get(i);
+                i++;
+            }
             if (!isOption(token)) {
                 unrecognized.add(token);
                 continue;
@@ -235,18 +243,11 @@ public class ArgumentParser {
                 String flag = token.substring(0, 2);
                 argument = findShort(flag);
                 if (argument != null && token.length() > 2) {
-                    if (argument.action.equals("count")) {
-                        // -vv
-                        int count = 1;
-                        for (char c : token.substring(2).toCharArray()) {
-                            if (c == token.charAt(1)) {
-                                count++;
-                            }
-                        }
-                        values.put(argument.dest, ((Integer) values.getOrDefault(argument.dest, 0)) + count);
-                        continue;
+                    if (List.of("store_true", "store_false", "count", "help", "version").contains(argument.action)) {
+                        pending = "-" + token.substring(2);
+                    } else {
+                        inlineValue = token.substring(2);
                     }
-                    inlineValue = token.substring(2);
                 }
             }
             if (argument == null) {

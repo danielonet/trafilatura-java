@@ -54,7 +54,9 @@ public final class Metadata {
 
     public static final Pattern META_URL = Pattern.compile("https?://(?:www\\.|w[0-9]+\\.)?([^/]+)");
 
-    public static final Pattern JSON_MINIFY = Pattern.compile("(\"(?:\\\\.|[^\"\\\\])*\")|\\s");
+    // unrolled form of ("(?:\\.|[^"\\])*")|\s: java.util.regex recurses on alternations inside loops
+    // and overflows the stack on long JSON strings, Python's engine does not
+    public static final Pattern JSON_MINIFY = Pattern.compile("(\"[^\"\\\\]*+(?:\\\\.[^\"\\\\]*+)*+\")|\\s");
 
     public static final Pattern HTMLTITLE_REGEX = Pattern.compile("^(.+)?\\s+[–•·—|⁄*⋆~‹«<›»>:-]\\s+(.+)$"); // part without dots?
 

@@ -22,7 +22,6 @@ import trafilatura.lxml.Etree;
 import trafilatura.lxml.XPath;
 import trafilatura.trafilatura.Utils.Response;
 
-import static trafilatura.trafilatura.Downloads.fetch_response;
 import static trafilatura.trafilatura.Downloads.fetch_url;
 import static trafilatura.trafilatura.Htmlprocessing.prune_unwanted_nodes;
 import static trafilatura.trafilatura.Settings.DEFAULT_CONFIG;
@@ -48,6 +47,15 @@ public final class Spider {
         }
     };
 
+    /** Module-level references, replaceable in tests like the Python module attributes. */
+    public static java.util.function.BiFunction<String, ConfigParser, Response> FETCH_RESPONSE =
+            (url, config) -> Downloads.fetch_response(url, false, false, config);
+    public static java.util.function.BiFunction<String, ConfigParser, RobotFileParser> GET_RULES = Spider::get_rules;
+
+    static Response fetch_response(String url, ConfigParser config) {
+        return FETCH_RESPONSE.apply(url, config);
+    }
+
     public static final String ROBOTS_TXT_URL = "/robots.txt";
     public static final int MAX_SEEN_URLS = 10;
     public static final int MAX_KNOWN_URLS = 100000;
@@ -72,7 +80,7 @@ public final class Spider {
             this.ref = this._get_reference(start);
             this.lang = lang;
             this.config = config;
-            this.rules = rules != null ? rules : get_rules(this.base, config);
+            this.rules = rules != null ? rules : GET_RULES.apply(this.base, config);
             this.i = 0;
             this.known_num = 0;
             this.is_on = true;
@@ -173,7 +181,7 @@ public final class Spider {
 
     /** Check if the homepage is redirected and return appropriate values (html, homepage, base URL). */
     public static Triple<String, String, String> probe_alternative_homepage(String homepage, ConfigParser config) {
-        Response response = fetch_response(homepage, false, false, config);
+        Response response = fetch_response(homepage, config);
         if (response == null || response.data == null || response.data.length == 0) {
             return Triple.of(null, null, null);
         }
@@ -202,13 +210,17 @@ public final class Spider {
     }
 
     /** Parse a robots.txt file with the urllib.robotparser port. */
-    public static RobotFileParser parse_robots(String robots_url, String data) {
+    public static RobotFileParser parse_robots(String robots_url, Object data) {
         // https://github.com/python/cpython/blob/main/Lib/urllib/robotparser.py
         RobotFileParser rules = new RobotFileParser();
         rules.set_url(robots_url);
         // exceptions happening here
         try {
-            rules.parse(Py.splitlines(data));
+            if (!(data instanceof String text)) {
+                // None, numbers and bytes fail in Python (no str.splitlines / str lines expected)
+                throw new IllegalArgumentException("robots.txt data must be a string, not " + (data == null ? "None" : data.getClass().getSimpleName()));
+            }
+            rules.parse(Py.splitlines(text));
         } catch (RuntimeException exc) {
             LOGGER.error("cannot read robots.txt: {}", exc.toString());
             return null;
@@ -366,7 +378,7 @@ public final class Spider {
                 process_links(htmlstring, params, Courlan.get_base_url(homepage).equals(params.base) ? homepage : url);
             }
         } else {
-            Response response = fetch_response(url, false, false, params.config);
+            Response response = fetch_response(url, params.config);
             process_response(response, params);
         }
 

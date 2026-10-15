@@ -24,6 +24,8 @@ public class Element implements Iterable<Element> {
     Element parent;
     XPath.DocumentNode docNode;
     final List<Element> children = new ArrayList<>();
+    /** Last known position in the parent's children, validated before use. */
+    private int indexHint = -1;
 
     public Element(String tag) {
         this.tag = tag;
@@ -115,8 +117,24 @@ public class Element implements Iterable<Element> {
     }
 
     public int index(Element child) {
-        for (int i = 0; i < children.size(); i++) {
+        // position hint: sibling walks (getnext, iter) would otherwise scan the parent's children
+        // on every step, quadratic for long sibling runs; lxml follows a linked list instead
+        int hint = child.indexHint;
+        int size = children.size();
+        if (hint >= 0 && hint < size && children.get(hint) == child) {
+            return hint;
+        }
+        // stale hint: removals before the child shift it down, insertions shift it up
+        int start = Math.min(Math.max(hint, 0), size - 1);
+        for (int i = start; i >= 0; i--) {
             if (children.get(i) == child) {
+                child.indexHint = i;
+                return i;
+            }
+        }
+        for (int i = start + 1; i < size; i++) {
+            if (children.get(i) == child) {
+                child.indexHint = i;
                 return i;
             }
         }

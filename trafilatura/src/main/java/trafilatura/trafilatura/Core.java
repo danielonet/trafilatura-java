@@ -400,6 +400,9 @@ public final class Core {
         return trafilatura_sequence(tree, options, null);
     }
 
+    /** Notified of every Extractor built from keyword arguments: lets tests spy on core.Extractor. */
+    public static java.util.function.Consumer<Extractor> EXTRACTOR_CREATED = options -> { };
+
     /** {@code raise ValueError} used to discard a document in bare_extraction(). */
     private static IllegalArgumentException discard() {
         return new IllegalArgumentException();
@@ -441,6 +444,7 @@ public final class Core {
                     .author_blacklist(kw.author_blacklist)
                     .url_blacklist(kw.url_blacklist)
                     .date_params(kw.date_extraction_params));
+            EXTRACTOR_CREATED.accept(options);
         }
 
         Document document;
@@ -634,6 +638,7 @@ public final class Core {
                     .author_blacklist(kw.author_blacklist)
                     .url_blacklist(kw.url_blacklist)
                     .date_params(kw.date_extraction_params));
+            EXTRACTOR_CREATED.accept(options);
         }
 
         // extraction

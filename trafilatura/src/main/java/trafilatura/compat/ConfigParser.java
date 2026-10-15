@@ -65,6 +65,14 @@ public class ConfigParser {
         }
     }
 
+    /** {@code config.read_dict({section: {option: value}})}; DEFAULT is the default section. */
+    public void read_dict(Map<String, Map<String, String>> dictionary) {
+        dictionary.forEach((section, values) -> {
+            add_section(section);
+            values.forEach((option, value) -> set(section, option, value));
+        });
+    }
+
     public void read_string(String content) {
         try {
             read_file(new StringReader(content));

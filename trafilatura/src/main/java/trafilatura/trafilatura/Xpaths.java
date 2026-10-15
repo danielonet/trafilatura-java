@@ -14,6 +14,14 @@ public final class Xpaths {
     private Xpaths() {
     }
 
+    /** Join concept tokens into a regex alternation; reject an empty group (would match every element). */
+    public static String _alt(String... tokens) {
+        if (tokens.length == 0) { // not an assert: must hold with assertions disabled
+            throw new IllegalArgumentException("empty token group would make re:test(...) match everything");
+        }
+        return String.join("|", tokens);
+    }
+
     public static final String REGEXP_NS = "http://exslt.org/regular-expressions";
 
     public static final List<XPath> BODY_XPATH = List.of(

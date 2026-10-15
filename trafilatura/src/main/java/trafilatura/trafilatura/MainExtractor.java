@@ -27,7 +27,6 @@ import static trafilatura.trafilatura.Htmlprocessing.handle_textnode;
 import static trafilatura.trafilatura.Htmlprocessing.link_density_test_tables;
 import static trafilatura.trafilatura.Htmlprocessing.process_node;
 import static trafilatura.trafilatura.Htmlprocessing.prune_unwanted_nodes;
-import static trafilatura.trafilatura.Settings.DEDUPE_SCAN_CAP;
 import static trafilatura.trafilatura.Settings.INLINE_CARRIED;
 import static trafilatura.trafilatura.Settings.INLINE_CONSUMING;
 import static trafilatura.trafilatura.Settings.INLINE_FORMATTABLE;
@@ -54,6 +53,9 @@ public final class MainExtractor {
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MainExtractor.class);
+
+    /** Module-level copy of Settings.DEDUPE_SCAN_CAP (tests patch it, like the Python module attribute). */
+    public static int DEDUPE_SCAN_CAP = Settings.DEDUPE_SCAN_CAP;
 
     public static final Set<String> TABLE_ELEMS = Set.of("td", "th");
     // meaningful internal attributes to carry onto a rewired sub-element (drop stray class/style/width/etc.)
