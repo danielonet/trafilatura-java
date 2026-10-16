@@ -104,8 +104,6 @@
     <build>
         <!--
             Sources live under trafilatura/src (standard main/test split).
-            The root-level tests/ and docs/ folders are untranslated leftovers
-            and are not part of the build.
         -->
         <sourceDirectory>${project.basedir}/trafilatura/src/main/java</sourceDirectory>
         <testSourceDirectory>${project.basedir}/trafilatura/src/test/java</testSourceDirectory>
@@ -145,6 +143,26 @@
                     </includes>
                     <excludedGroups>${surefire.excludedGroups}</excludedGroups>
                 </configuration>
+            </plugin>
+            <!-- code coverage: target/site/jacoco/jacoco.xml after mvn verify (uploaded to Codecov by CI) -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

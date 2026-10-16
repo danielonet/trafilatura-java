@@ -1,5 +1,12 @@
 # trafilatura-java
 
+[![Build](https://github.com/danielonet/trafilatura-java/actions/workflows/build.yml/badge.svg)](https://github.com/danielonet/trafilatura-java/actions/workflows/build.yml)
+[![Java](https://img.shields.io/badge/Java-21-blue?logo=openjdk)](https://openjdk.org/projects/jdk/21/)
+[![Maven Central](https://img.shields.io/maven-central/v/trafilatura/trafilatura-java.svg)](https://central.sonatype.com/artifact/trafilatura/trafilatura-java)
+[![Code Coverage](https://img.shields.io/codecov/c/github/danielonet/trafilatura-java.svg)](https://codecov.io/gh/danielonet/trafilatura-java)
+[![Downloads](https://img.shields.io/github/downloads/danielonet/trafilatura-java/total.svg)](https://github.com/danielonet/trafilatura-java/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A Java port of [trafilatura](https://github.com/adbar/trafilatura) 2.3.1, the Python
 library and command-line tool by Adrien Barbaresi for extracting the main text,
 comments and metadata from web pages.
@@ -86,14 +93,11 @@ trafilatura/src/main/java/trafilatura/
   courlan/       stand-in for the Python courlan package (URL handling)
   htmldate/      minimal stand-in for htmldate (publication dates)
   justext/       stub for jusText (fallback extractor)
-  docs/          Sphinx configuration data (Conf)
 trafilatura/src/main/resources/trafilatura/   settings.cfg, TEI DTD
 trafilatura/src/test/java/trafilatura/tests/  ported pytest suites (JUnit 5)
+trafilatura/src/test/java/trafilatura/docs/   documentation build test (skipped without Sphinx)
 trafilatura/src/test/resources/               test pages, cached real-world pages
 ```
-
-The root-level `tests/` and `docs/` folders are older, untranslated converter output.
-They are not part of the build and can be deleted.
 
 ## Configuration
 
