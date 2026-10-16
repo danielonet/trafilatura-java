@@ -49,12 +49,6 @@ import static io.github.danielonet.trafilatura.Downloads.add_to_compressed_dict;
 import static io.github.danielonet.trafilatura.Downloads.fetch_response;
 import static io.github.danielonet.trafilatura.Downloads.fetch_url;
 
-// MockWebServer imports
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.RecordedRequest;
-
 @ExtendWith(Conftest.MockNetwork.class)
 public class CliTests {
     static final String RESOURCES_DIR = Conftest.RESOURCES_DIR.toString();
@@ -514,128 +508,67 @@ public class CliTests {
 
     /** Test crawling and exploration functions. */
     @Test
-    void test_crawling() throws IOException {
-        MockWebServer server = new MockWebServer();
-        Dispatcher dispatcher = new Dispatcher() {
-            @Override
-            public MockResponse dispatch(RecordedRequest request) {
-                String path = request.getPath();
-                if (path == null) {
-                    return new MockResponse().setResponseCode(404);
-                }
-                // normalize path (strip query)
-                String p = path.split("\\?")[0];
-                switch (p) {
-                    case "/html":
-                        return new MockResponse().setResponseCode(200).addHeader("Content-Type", "text/html")
-                                .setBody("<html><body><a href=\"" + server.url("/html") + "\">self</a></body></html>");
-                    case "/":
-                        return new MockResponse().setResponseCode(301)
-                                .addHeader("Location", server.url("/html").toString());
-                    case "/links/1/1": {
-                        String body = "<html><body>"
-                                + "<a href=\"" + server.url("/links/1/1") + "\">self</a>"
-                                + "<a href=\"" + server.url("/links/1/0") + "\">zero</a>"
-                                + "</body></html>";
-                        return new MockResponse().setResponseCode(200).setBody(body);
-                    }
-                    case "/links/1/0":
-                        return new MockResponse().setResponseCode(200).setBody("<html><body>p</body></html>");
-                    case "/links/4/4": {
-                        StringBuilder sb = new StringBuilder("<html><body>");
-                        for (int i = 0; i < 6; i++) {
-                            sb.append("<a href=\"" + server.url("/links/4/" + i) + "\">" + i + "</a>");
-                        }
-                        sb.append("</body></html>");
-                        return new MockResponse().setResponseCode(200).setBody(sb.toString());
-                    }
-                    case "/links/4/0":
-                    case "/links/4/1":
-                    case "/links/4/2":
-                    case "/links/4/3":
-                    case "/links/4/5":
-                        return new MockResponse().setResponseCode(200).setBody("<html><body>p</body></html>");
-                    case "/links/2/2": {
-                        String body = "<html><body><a href=\"" + server.url("/links/2/0") + "\">0</a></body></html>";
-                        return new MockResponse().setResponseCode(200).setBody(body);
-                    }
-                    case "/links/2/0":
-                        return new MockResponse().setResponseCode(200).setBody("<html><body><a href=\"/x\">x</a></body></html>")
-                                .addHeader("Content-Type", "text/html");
-                    default:
-                        return new MockResponse().setResponseCode(404);
-                }
+    void test_crawling() {
+        CliUtils.cli_crawler(Cli.parse_args("--crawl", ""));
+        CliUtils.cli_crawler(Cli.parse_args("--crawl", " "));
+
+        Args args = Cli.parse_args("--crawl", "https://httpbun.com/html");
+        Args crawlArgs = args;
+        assertEquals("https://httpbun.com/html\n", captureStdout(() -> Cli.process_args(crawlArgs)));
+
+        Spider.URL_STORE = new UrlStore(false, false);
+        // links permitted
+        Args linkArgs = Cli.parse_args("--crawl", "https://httpbun.com/links/1/1", "--list", "--parallel", "1");
+        String out = captureStdout(() -> CliUtils.cli_crawler(linkArgs));
+        // possibly a bug on Github actions, should be 2 URLs
+        assertTrue(List.of("https://httpbun.com/links/1/1\nhttps://httpbun.com/links/1/0\n",
+                "https://httpbun.com/links/1/1\n").contains(out), out);
+        Spider.URL_STORE = new UrlStore(false, false);
+        // 0 links permitted
+        linkArgs.crawl = "https://httpbun.com/links/4/4";
+        out = captureStdout(() -> CliUtils.cli_crawler(linkArgs, 0, null, null));
+        // should be 6 (5 URLs as output), possibly a bug on Actions CI/CD
+        assertTrue(List.of(2, 6).contains(out.split("\n", -1).length), out);
+
+        // responses from an unregistered base (e.g. cross-host redirect) are skipped
+        Spider.URL_STORE = new UrlStore(false, false);
+        Response start = fetch_response("https://httpbun.com/links/2/2");
+        LinkedList<Pair<String, Response>> extra = new LinkedList<>(List.of(
+                Pair.of("https://stray.example/", new Response(b("<html><body><a href='/x'>x</a></body></html>"), 200,
+                        "https://stray.example/")),
+                Pair.of(start.url, start)));
+        CliUtils.ResponseDownloads real_downloads = CliUtils.BUFFERED_RESPONSE_DOWNLOADS;
+        CliUtils.BUFFERED_RESPONSE_DOWNLOADS = (bufferlist, threads, options) -> {
+            List<Pair<String, Response>> first = new ArrayList<>();
+            while (!extra.isEmpty()) {
+                first.add(extra.removeLast());
             }
-        };
-        server.setDispatcher(dispatcher);
-        server.start();
-        try {
-            // basic empty crawl calls
-            CliUtils.cli_crawler(Cli.parse_args("--crawl", ""));
-            CliUtils.cli_crawler(Cli.parse_args("--crawl", " "));
+            Iterator<Pair<String, Response>> rest = real_downloads.download(bufferlist, threads, options);
+            return new Iterator<>() {
+                final Iterator<Pair<String, Response>> head = first.iterator();
 
-            String htmlUrl = server.url("/html").toString();
-            Args args = Cli.parse_args("--crawl", htmlUrl);
-            Args crawlArgs = args;
-            assertEquals(htmlUrl + "\n", captureStdout(() -> Cli.process_args(crawlArgs)));
-
-            Spider.URL_STORE = new UrlStore(false, false);
-            // links permitted
-            Args linkArgs = Cli.parse_args("--crawl", server.url("/links/1/1").toString(), "--list", "--parallel", "1");
-            String out = captureStdout(() -> CliUtils.cli_crawler(linkArgs));
-            String expected1 = server.url("/links/1/1").toString() + "\n" + server.url("/links/1/0").toString() + "\n";
-            String expected2 = server.url("/links/1/1").toString() + "\n";
-            assertTrue(List.of(expected1, expected2).contains(out), out);
-
-            Spider.URL_STORE = new UrlStore(false, false);
-            // 0 links permitted
-            linkArgs.crawl = server.url("/links/4/4").toString();
-            out = captureStdout(() -> CliUtils.cli_crawler(linkArgs, 0, null, null));
-            assertTrue(List.of(2, 6).contains(out.split("\n", -1).length), out);
-
-            // responses from an unregistered base (e.g. cross-host redirect) are skipped
-            Spider.URL_STORE = new UrlStore(false, false);
-            Response start = fetch_response(server.url("/links/2/2").toString());
-            LinkedList<Pair<String, Response>> extra = new LinkedList<>(List.of(
-                    Pair.of("https://stray.example/",
-                            new Response(b("<html><body><a href='/x'>x</a></body></html>"), 200, "https://stray.example/")),
-                    Pair.of(start.url, start)));
-            CliUtils.ResponseDownloads real_downloads = CliUtils.BUFFERED_RESPONSE_DOWNLOADS;
-            CliUtils.BUFFERED_RESPONSE_DOWNLOADS = (bufferlist, threads, options) -> {
-                List<Pair<String, Response>> first = new ArrayList<>();
-                while (!extra.isEmpty()) {
-                    first.add(extra.removeLast());
+                @Override
+                public boolean hasNext() {
+                    return head.hasNext() || rest.hasNext();
                 }
-                Iterator<Pair<String, Response>> rest = real_downloads.download(bufferlist, threads, options);
-                return new Iterator<>() {
-                    final Iterator<Pair<String, Response>> head = first.iterator();
 
-                    @Override
-                    public boolean hasNext() {
-                        return head.hasNext() || rest.hasNext();
-                    }
-
-                    @Override
-                    public Pair<String, Response> next() {
-                        return head.hasNext() ? head.next() : rest.next();
-                    }
-                };
+                @Override
+                public Pair<String, Response> next() {
+                    return head.hasNext() ? head.next() : rest.next();
+                }
             };
-            Args strayArgs = Cli.parse_args("--crawl", server.url("/links/2/2").toString(), "--list");
-            String err = captureStderr(() -> captureStdout(() -> CliUtils.cli_crawler(strayArgs)));
-            assertEquals(1, T.count(err, "no crawl parameters for https://stray.example/"), err);
-            // ensure discovered link from server is stored
-            String base = server.url("/").toString().replaceAll("/$", "");
-            assertTrue(Spider.URL_STORE.find_known_urls(base).stream().anyMatch(u -> u.contains("/links/2/0")));
-            CliUtils.BUFFERED_RESPONSE_DOWNLOADS = real_downloads;
-            Spider.URL_STORE = new UrlStore(false, false);
+        };
+        Args strayArgs = Cli.parse_args("--crawl", "https://httpbun.com/links/2/2", "--list");
+        String err = captureStderr(() -> captureStdout(() -> CliUtils.cli_crawler(strayArgs)));
+        assertEquals(1, T.count(err, "no crawl parameters for https://stray.example/"), err);
+        assertTrue(Spider.URL_STORE.find_known_urls("https://httpbun.com").contains("https://httpbun.com/links/2/0"));
+        assertTrue(Spider.URL_STORE.find_known_urls("https://stray.example").isEmpty());
+        CliUtils.BUFFERED_RESPONSE_DOWNLOADS = real_downloads;
+        Spider.URL_STORE = new UrlStore(false, false);
 
-            // Exploration (Sitemap + Crawl)
-            Args exploreArgs = Cli.parse_args("--explore", htmlUrl, "--list");
-            assertEquals(htmlUrl, Py.strip(captureStdout(() -> Cli.process_args(exploreArgs))));
-        } finally {
-            server.shutdown();
-        }
+        // Exploration (Sitemap + Crawl)
+        Args exploreArgs = Cli.parse_args("--explore", "https://httpbun.com/html", "--list");
+        assertEquals("https://httpbun.com/html", Py.strip(captureStdout(() -> Cli.process_args(exploreArgs))));
     }
 
     /** Test webpage probing functions. */

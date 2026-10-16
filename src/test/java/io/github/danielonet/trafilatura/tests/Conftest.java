@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import io.github.danielonet.trafilatura.compat.ConfigParser;
 import io.github.danielonet.trafilatura.compat.Pair;
 import io.github.danielonet.trafilatura.compat.Py;
+import io.github.danielonet.trafilatura.courlan.UrlStore;
 import io.github.danielonet.trafilatura.Downloads;
 import io.github.danielonet.trafilatura.Feeds;
 import io.github.danielonet.trafilatura.Settings;
@@ -179,14 +180,21 @@ public class Conftest implements BeforeEachCallback, AfterEachCallback {
     private DoubleConsumer savedSitemapsSleep;
     private DoubleConsumer savedSpiderSleep;
     private UnaryOperator<ConfigParser> savedConfigHook;
+    private UrlStore savedUrlStore;
 
-    /** no_politeness_delay: politeness waits only slow the suite down. */
+    /**
+     * no_politeness_delay: politeness waits only slow the suite down.
+     * Every test also starts with an empty crawler URL store: Spider.URL_STORE is module-global, and URLs
+     * left by one test class leak into the crawl output of the next one depending on the class order.
+     */
     @Override
     public void beforeEach(ExtensionContext context) {
         savedFeedsSleep = Feeds.SLEEP;
         savedSitemapsSleep = Sitemaps.SLEEP;
         savedSpiderSleep = Spider.SLEEP;
         savedConfigHook = Settings.USE_CONFIG_HOOK;
+        savedUrlStore = Spider.URL_STORE;
+        Spider.URL_STORE = new UrlStore(false, false);
         Feeds.SLEEP = s -> { };
         Sitemaps.SLEEP = s -> { };
         Spider.SLEEP = s -> { };
@@ -200,6 +208,7 @@ public class Conftest implements BeforeEachCallback, AfterEachCallback {
         Sitemaps.SLEEP = savedSitemapsSleep;
         Spider.SLEEP = savedSpiderSleep;
         Settings.USE_CONFIG_HOOK = savedConfigHook;
+        Spider.URL_STORE = savedUrlStore;
         assertEquals(_PRISTINE_CONFIG, Settings.DEFAULT_CONFIG.state(),
                 "DEFAULT_CONFIG was mutated, copy it with use_config()");
     }
