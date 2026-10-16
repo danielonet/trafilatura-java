@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/trafilatura-java-banner.png" alt="Trafilatura Java Port" width="600">
+</p>
+
 # trafilatura-java
 
 [![Build](https://github.com/danielonet/trafilatura-java/actions/workflows/build.yml/badge.svg)](https://github.com/danielonet/trafilatura-java/actions/workflows/build.yml)
