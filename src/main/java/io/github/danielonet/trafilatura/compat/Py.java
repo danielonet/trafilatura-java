@@ -127,7 +127,7 @@ public final class Py {
         while (i < n) {
             char c = s.charAt(i);
             boolean boundary = c == '\n' || c == '\r' || c == '\u000b' || c == '\u000c' || c == '\u001c'
-                    || c == '\u001d' || c == '\u001e' || c == '\u0085' || c == '' || c == '';
+                    || c == '\u001d' || c == '\u001e' || c == '\u0085' || c == '\u2028' || c == '\u2029';
             if (boundary) {
                 lines.add(s.substring(start, i));
                 if (c == '\r' && i + 1 < n && s.charAt(i + 1) == '\n') {
