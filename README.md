@@ -2,7 +2,7 @@
 
 [![Build](https://github.com/danielonet/trafilatura-java/actions/workflows/build.yml/badge.svg)](https://github.com/danielonet/trafilatura-java/actions/workflows/build.yml)
 [![Java](https://img.shields.io/badge/Java-21-blue?logo=openjdk)](https://openjdk.org/projects/jdk/21/)
-[![Maven Central](https://img.shields.io/maven-central/v/trafilatura/trafilatura-java.svg)](https://central.sonatype.com/artifact/trafilatura/trafilatura-java)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.danielonet/trafilatura-java.svg)](https://central.sonatype.com/artifact/io.github.danielonet/trafilatura-java)
 [![Code Coverage](https://img.shields.io/codecov/c/github/danielonet/trafilatura-java.svg)](https://codecov.io/gh/danielonet/trafilatura-java)
 [![Downloads](https://img.shields.io/github/downloads/danielonet/trafilatura-java/total.svg)](https://github.com/danielonet/trafilatura-java/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -42,10 +42,10 @@ hashes), JUnit 5 (tests).
 ### As a library
 
 ```java
-import trafilatura.trafilatura.Core;
-import trafilatura.trafilatura.Downloads;
-import trafilatura.trafilatura.Metadata;
-import trafilatura.trafilatura.Settings.Document;
+import io.github.danielonet.trafilatura.Core;
+import io.github.danielonet.trafilatura.Downloads;
+import io.github.danielonet.trafilatura.Metadata;
+import io.github.danielonet.trafilatura.Settings.Document;
 
 String html = Downloads.fetch_url("https://example.org/article");
 
@@ -73,9 +73,9 @@ Document meta = Metadata.extract_metadata(html);
 
 ```bash
 CP="target/classes:$(mvn -q dependency:build-classpath -Dmdep.outputFile=/dev/stdout)"
-java -cp "$CP" trafilatura.trafilatura.Cli --version
-java -cp "$CP" trafilatura.trafilatura.Cli -u https://example.org/article --markdown
-cat page.html | java -cp "$CP" trafilatura.trafilatura.Cli --json --with-metadata
+java -cp "$CP" io.github.danielonet.trafilatura.Cli --version
+java -cp "$CP" io.github.danielonet.trafilatura.Cli -u https://example.org/article --markdown
+cat page.html | java -cp "$CP" io.github.danielonet.trafilatura.Cli --json --with-metadata
 ```
 
 The options are the same as the Python CLI; run with `--help` for the list.
@@ -83,8 +83,8 @@ The options are the same as the Python CLI; run with `--help` for the list.
 ## Project layout
 
 ```
-trafilatura/src/main/java/trafilatura/
-  trafilatura/   the port itself: one class per Python module
+src/main/java/io/github/danielonet/trafilatura/
+  *.java         the port itself: one class per Python module
                  (core.py -> Core, main_extractor.py -> MainExtractor, ...)
   lxml/          a small lxml-compatible element tree (text/tail model, live iteration,
                  XPath 1.0 via Jaxen, tostring, HTML parsing via jsoup)
@@ -93,10 +93,10 @@ trafilatura/src/main/java/trafilatura/
   courlan/       stand-in for the Python courlan package (URL handling)
   htmldate/      minimal stand-in for htmldate (publication dates)
   justext/       stub for jusText (fallback extractor)
-trafilatura/src/main/resources/trafilatura/   settings.cfg, TEI DTD
-trafilatura/src/test/java/trafilatura/tests/  ported pytest suites (JUnit 5)
-trafilatura/src/test/java/trafilatura/docs/   documentation build test (skipped without Sphinx)
-trafilatura/src/test/resources/               test pages, cached real-world pages
+src/main/resources/io/github/danielonet/trafilatura/   settings.cfg, TEI DTD
+src/test/java/io/github/danielonet/trafilatura/tests/  ported pytest suites (JUnit 5)
+src/test/java/io/github/danielonet/trafilatura/docs/   documentation build test (skipped without Sphinx)
+src/test/resources/   test pages, cached real-world pages
 ```
 
 ## Configuration

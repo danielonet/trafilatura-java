@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>trafilatura</groupId>
+    <groupId>io.github.danielonet</groupId>
     <artifactId>trafilatura-java</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -44,7 +44,7 @@
             <artifactId>jsoup</artifactId>
             <version>${jsoup.version}</version>
         </dependency>
-        <!-- XPath 1.0 engine over the lxml-style element tree in trafilatura.lxml -->
+        <!-- XPath 1.0 engine over the lxml-style element tree in io.github.danielonet.trafilatura.lxml -->
         <dependency>
             <groupId>jaxen</groupId>
             <artifactId>jaxen</artifactId>
@@ -102,22 +102,6 @@
     </dependencies>
 
     <build>
-        <!--
-            Sources live under trafilatura/src (standard main/test split).
-        -->
-        <sourceDirectory>${project.basedir}/trafilatura/src/main/java</sourceDirectory>
-        <testSourceDirectory>${project.basedir}/trafilatura/src/test/java</testSourceDirectory>
-        <resources>
-            <resource>
-                <directory>${project.basedir}/trafilatura/src/main/resources</directory>
-            </resource>
-        </resources>
-        <testResources>
-            <testResource>
-                <directory>${project.basedir}/trafilatura/src/test/resources</directory>
-            </testResource>
-        </testResources>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -171,7 +155,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>trafilatura.trafilatura.Cli</mainClass>
+                            <mainClass>io.github.danielonet.trafilatura.Cli</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
