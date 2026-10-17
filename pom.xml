@@ -11,13 +11,30 @@
 
     <name>trafilatura-java</name>
     <description>Java port of the Python trafilatura web text extraction library</description>
+    <url>https://github.com/danielonet/trafilatura-java</url>
 
     <licenses>
         <license>
-            <name>See LICENSE</name>
-            <url>file://${project.basedir}/LICENSE</url>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <developers>
+        <developer>
+            <id>danielonet</id>
+            <name>danielonet</name>
+            <url>https://github.com/danielonet</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/danielonet/trafilatura-java.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/danielonet/trafilatura-java.git</developerConnection>
+        <url>https://github.com/danielonet/trafilatura-java</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
@@ -67,6 +84,8 @@
             <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>
             <scope>runtime</scope>
+            <!-- backend for the CLI only; library users bring their own SLF4J binding -->
+            <optional>true</optional>
         </dependency>
         <!-- charset detection (stands in for charset_normalizer / cchardet) -->
         <dependency>
@@ -162,4 +181,75 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Maven Central release: mvn -P release clean deploy
+             needs a Central Portal token in settings.xml (server id "central") and a GPG key -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.11.2</version>
+                        <configuration>
+                            <doclint>none</doclint>
+                            <quiet>true</quiet>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.7</version>
+                        <configuration>
+                            <!-- passphrase from MAVEN_GPG_PASSPHRASE or the gpg agent, never from settings.xml -->
+                            <bestPractices>true</bestPractices>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.7.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

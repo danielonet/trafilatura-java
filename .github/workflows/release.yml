@@ -1,0 +1,44 @@
+name: release
+
+# Publishes to Maven Central when a version tag is pushed: git tag v0.1.0 && git push origin v0.1.0
+# The version in the POM is taken from the tag, so pom.xml can stay on -SNAPSHOT.
+#
+# Repository secrets:
+#   CENTRAL_TOKEN_USERNAME / CENTRAL_TOKEN_PASSWORD  user token from central.sonatype.com
+#   GPG_PRIVATE_KEY   output of: gpg --armor --export-secret-keys <KEY_ID>
+#   GPG_PASSPHRASE    passphrase of that key
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write  # create the GitHub release
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_TOKEN_USERNAME
+          server-password: CENTRAL_TOKEN_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+      - name: Set version from tag
+        run: mvn -B versions:set -DnewVersion="${GITHUB_REF_NAME#v}" -DgenerateBackupPoms=false
+      - name: Build, sign and publish
+        run: mvn -B -P release clean deploy
+        env:
+          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/trafilatura-java-*.jar
+          generate_release_notes: true
