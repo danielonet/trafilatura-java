@@ -37,6 +37,17 @@ jobs:
           CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: Show bundle contents
+        if: always()
+        run: |
+          ls -R target/central-staging target/central-publishing || true
+          unzip -l target/central-publishing/central-bundle.zip || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: central-bundle
+          path: target/central-publishing/central-bundle.zip
+          if-no-files-found: warn
       - name: GitHub release
         uses: softprops/action-gh-release@v2
         with:
