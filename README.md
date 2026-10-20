@@ -55,7 +55,7 @@ runs in the same process, with the same algorithm and the same `settings.cfg`.
 > - **Tests:** 13 of the upstream pytest modules are ported and pass, 4,194 tests in
 >   all: baseline, CLI, deduplication, downloads, feeds, filters, JSON metadata,
 >   metadata, repeated output, sitemaps, spider, unit and XML/TEI. 11 tests are tagged
->   as known deviations (listed below) and 2 need network access; both groups are
+>   as known deviations (causes below) and 2 need network access; both groups are
 >   skipped by default. The real-world tests and the evaluation scripts are not
 >   ported yet.
 > - **Known gaps:** courlan and htmldate are simplified, jusText is a stub (its
