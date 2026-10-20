@@ -9,7 +9,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.danielonet/trafilatura-java.svg)](https://central.sonatype.com/artifact/io.github.danielonet/trafilatura-java)
 [![Code Coverage](https://img.shields.io/codecov/c/github/danielonet/trafilatura-java.svg)](https://codecov.io/gh/danielonet/trafilatura-java)
 [![Downloads](https://img.shields.io/github/downloads/danielonet/trafilatura-java/total.svg)](https://github.com/danielonet/trafilatura-java/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
 A Java port of [trafilatura](https://github.com/adbar/trafilatura) 2.3.1, the Python
 library and command-line tool by Adrien Barbaresi for extracting the main text,
@@ -162,6 +162,10 @@ file with `Settings.use_config("my.cfg")`, then `Core.kw().config(...)`, or with
 
 ## License
 
-This repository's LICENSE file is MIT. The upstream projects the port is derived from
-are trafilatura, courlan and htmldate (Apache-2.0, Adrien Barbaresi) and jusText
-(BSD-2-Clause). Their copyright and license notices must be kept in any distribution.
+Apache License 2.0, the same as upstream trafilatura. See [LICENSE](LICENSE) and
+[NOTICE](NOTICE).
+
+The port is derived from trafilatura, courlan and htmldate (Apache-2.0, Adrien
+Barbaresi). The jusText stand-in follows the API of jusText (BSD-2-Clause, see
+[licenses/LICENSE-jusText.txt](licenses/LICENSE-jusText.txt)). The jar ships these
+files under `META-INF/`.

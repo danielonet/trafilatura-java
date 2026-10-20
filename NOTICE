@@ -1,0 +1,26 @@
+trafilatura-java
+Copyright 2026 danielonet
+
+This product is a Java port of the following projects. Their copyright
+notices are reproduced here as required by their licenses.
+
+trafilatura (https://github.com/adbar/trafilatura)
+  Copyright Adrien Barbaresi and contributors
+  Licensed under the Apache License, Version 2.0
+
+courlan (https://github.com/adbar/courlan)
+  Copyright Adrien Barbaresi and contributors
+  Licensed under the Apache License, Version 2.0
+
+htmldate (https://github.com/adbar/htmldate)
+  Copyright Adrien Barbaresi and contributors
+  Licensed under the Apache License, Version 2.0
+
+jusText (https://github.com/miso-belica/jusText)
+  Copyright (c) 2011, Jan Pomikalek
+  Copyright (c) 2013, Michal Belica
+  Licensed under the BSD 2-Clause License; see licenses/LICENSE-jusText.txt
+
+The files under src/main/java and src/test/java that start with a
+"Java port of ..." comment are derived works of the corresponding
+upstream source files and were modified to run on the JVM.

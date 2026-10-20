@@ -1,3 +1,4 @@
+// Java port of the jusText API (stub), BSD-2-Clause, see licenses/LICENSE-jusText.txt
 package io.github.danielonet.trafilatura.justext;
 
 import java.util.ArrayList;

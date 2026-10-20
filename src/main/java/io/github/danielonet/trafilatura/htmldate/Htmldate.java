@@ -1,3 +1,4 @@
+// Java port of htmldate (simplified), https://github.com/adbar/htmldate
 package io.github.danielonet.trafilatura.htmldate;
 
 import java.time.LocalDate;

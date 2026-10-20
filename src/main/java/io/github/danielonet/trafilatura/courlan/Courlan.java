@@ -1,3 +1,4 @@
+// Java port of courlan (simplified), https://github.com/adbar/courlan
 package io.github.danielonet.trafilatura.courlan;
 
 import java.util.ArrayList;

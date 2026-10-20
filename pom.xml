@@ -15,8 +15,8 @@
 
     <licenses>
         <license>
-            <name>MIT License</name>
-            <url>https://opensource.org/licenses/MIT</url>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -121,6 +121,21 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <!-- license files go into META-INF of the jar, as Apache-2.0 section 4 requires -->
+            <resource>
+                <directory>${project.basedir}</directory>
+                <targetPath>META-INF</targetPath>
+                <includes>
+                    <include>LICENSE</include>
+                    <include>NOTICE</include>
+                    <include>licenses/*</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

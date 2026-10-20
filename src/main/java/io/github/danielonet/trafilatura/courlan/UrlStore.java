@@ -1,3 +1,4 @@
+// Java port of courlan/urlstore.py
 package io.github.danielonet.trafilatura.courlan;
 
 import java.time.Duration;
