@@ -62,13 +62,22 @@ tasks.test {
 }
 
 tasks.jar {
-    manifest.attributes("Main-Class" to "io.github.danielonet.trafilatura.Cli")
+    manifest.attributes(
+        "Main-Class" to "io.github.danielonet.trafilatura.Cli",
+        "Implementation-Title" to project.name,
+        "Implementation-Version" to project.version,
+    )
 }
 
 // self-contained CLI jar: build/libs/trafilatura-java-<version>-cli.jar, run with java -jar
 tasks.shadowJar {
     archiveClassifier = "cli"
-    manifest.attributes("Main-Class" to "io.github.danielonet.trafilatura.Cli", "Multi-Release" to "true")
+    manifest.attributes(
+        "Main-Class" to "io.github.danielonet.trafilatura.Cli",
+        "Implementation-Title" to project.name,
+        "Implementation-Version" to project.version,
+        "Multi-Release" to "true",
+    )
     // let service files from several jars reach the merge instead of keeping only the first
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     mergeServiceFiles()

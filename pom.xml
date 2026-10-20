@@ -190,6 +190,7 @@
                     <archive>
                         <manifest>
                             <mainClass>io.github.danielonet.trafilatura.Cli</mainClass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                     </archive>
                 </configuration>

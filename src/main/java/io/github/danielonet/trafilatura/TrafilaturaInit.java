@@ -23,6 +23,9 @@ public final class TrafilaturaInit {
     public static final String __license__ = "Apache-2.0";
     public static final String __copyright__ = "Copyright 2019-present, Adrien Barbaresi";
     public static final String __version__ = "2.3.1";
+    // version of this Java port (not of upstream), from the jar manifest; "dev" when run from classes
+    public static final String PORT_VERSION = java.util.Objects.requireNonNullElse(
+            TrafilaturaInit.class.getPackage().getImplementationVersion(), "dev");
 
     public static final List<String> __all__ = List.of(
             "bare_extraction", "baseline", "extract", "extract_metadata", "extract_with_metadata", "fetch_response",

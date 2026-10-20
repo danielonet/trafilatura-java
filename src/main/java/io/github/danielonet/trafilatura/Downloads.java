@@ -94,7 +94,10 @@ public final class Downloads {
 
     // advertises exactly the encodings that can be decoded
     public static final Map<String, String> DEFAULT_HEADERS = new LinkedHashMap<>();
-    public static final String USER_AGENT = "trafilatura/" + TrafilaturaInit.__version__ + " (+https://github.com/adbar/trafilatura)";
+    // identifies the Java port so site owners reach this project, not upstream; robots.txt rules
+    // for "trafilatura" still apply, as agents are matched by substring
+    public static final String USER_AGENT = "trafilatura-java/" + TrafilaturaInit.PORT_VERSION
+            + " (+https://github.com/danielonet/trafilatura-java)";
 
     static {
         // urllib3.util.make_headers(accept_encoding=True): lowercase key
