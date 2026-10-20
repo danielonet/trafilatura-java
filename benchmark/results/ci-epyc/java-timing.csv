@@ -1,0 +1,8 @@
+tool,library,version,pages,seconds,pages_per_second,alloc_mean_kb,alloc_p95_kb,errors
+trafilatura-java fast,trafilatura-java,0.1.1-SNAPSHOT,990,15.799,62.66,11033,28386,0
+trafilatura-java,trafilatura-java,0.1.1-SNAPSHOT,990,17.970,55.09,13338,33918,0
+trafilatura-java precision,trafilatura-java,0.1.1-SNAPSHOT,990,18.980,52.16,14992,37136,0
+trafilatura-java recall,trafilatura-java,0.1.1-SNAPSHOT,990,14.921,66.35,10096,24946,0
+boilerpipe,com.robbypond:boilerpipe,1.2.3,990,4.434,223.25,4516,10296,0
+readability4j,net.dankito.readability4j:readability4j,1.0.8,990,8.719,113.54,5492,14812,1
+jsoup text,org.jsoup:jsoup,1.18.3,990,1.575,628.70,1527,4259,0

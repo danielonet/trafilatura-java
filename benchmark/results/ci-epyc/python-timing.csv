@@ -1,0 +1,5 @@
+tool,library,version,pages,seconds,pages_per_second,alloc_mean_kb,alloc_p95_kb,errors
+trafilatura fast,trafilatura,2.3.1,990,17.305,57.21,,,0
+trafilatura,trafilatura,2.3.1,990,23.148,42.77,,,0
+trafilatura precision,trafilatura,2.3.1,990,23.646,41.87,,,0
+trafilatura recall,trafilatura,2.3.1,990,15.466,64.01,,,0
