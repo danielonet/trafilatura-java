@@ -11,20 +11,61 @@
 [![Downloads](https://img.shields.io/github/downloads/danielonet/trafilatura-java/total.svg)](https://github.com/danielonet/trafilatura-java/releases)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-A Java port of [trafilatura](https://github.com/adbar/trafilatura) 2.3.1, the Python
-library and command-line tool by Adrien Barbaresi for extracting the main text,
-comments and metadata from web pages.
+Extract the main text, comments and metadata from web pages in Java: a port of
+[trafilatura](https://github.com/adbar/trafilatura) 2.3.1, the Python library by
+[Adrien Barbaresi](https://github.com/adbar).
 
-Given an HTML page, it removes the boilerplate (navigation, ads, footers, share
-buttons) and returns the article text as plain text, Markdown, XML, XML-TEI, JSON, CSV
-or simplified HTML, optionally with metadata: title, author, date, site name,
-categories, tags and license. It also covers the surrounding tooling: downloading
-pages, finding feeds and sitemaps, and a small focused crawler.
+```java
+import io.github.danielonet.trafilatura.Core;
+import io.github.danielonet.trafilatura.Downloads;
 
-The port started from a machine translation (Pyrite) and was then rewritten by hand to
-compile and to behave like the Python original. Function and field names deliberately
-stay the same as in Python (`bare_extraction`, `extract_metadata`, `max_tree_size`...),
-so the Python documentation and source can be read side by side with this code.
+String html = Downloads.fetch_url("https://peps.python.org/pep-0020/");
+String markdown = Core.extract(html, Core.kw().output_format("markdown"));
+System.out.println(markdown);
+```
+
+Output (shortened), with the site navigation, sidebar and footer removed:
+
+````markdown
+# PEP 20 – The Zen of Python
+
+...
+
+## Abstract
+
+Long time Pythoneer Tim Peters succinctly channels the BDFL’s guiding principles for Python’s design into 20 aphorisms, only 19 of which have been written down.
+
+## The Zen of Python
+
+```
+Beautiful is better than ugly.
+Explicit is better than implicit.
+...
+```
+````
+
+**Why:** the usual JVM choice, boilerpipe, is no longer maintained, so JVM teams end up
+calling Python trafilatura through a subprocess or a sidecar service. This library
+runs in the same process, with the same algorithm and the same `settings.cfg`.
+
+> **Status (v0.1.1)**
+>
+> - **Fidelity:** follows trafilatura 2.3.1 module by module. The library and the CLI
+>   are fully ported.
+> - **Tests:** 13 of the upstream pytest modules are ported and pass, 4,194 tests in
+>   all: baseline, CLI, deduplication, downloads, feeds, filters, JSON metadata,
+>   metadata, repeated output, sitemaps, spider, unit and XML/TEI. 11 tests are tagged
+>   as known deviations (listed below) and 2 need network access; both groups are
+>   skipped by default. The real-world tests and the evaluation scripts are not
+>   ported yet.
+> - **Known gaps:** courlan and htmldate are simplified, jusText is a stub (its
+>   fallback never fires), there is no language detection, and HTML is parsed with
+>   jsoup instead of libxml2. See [Differences from the Python version](#differences-from-the-python-version).
+
+It returns the text as plain text, Markdown, XML, XML-TEI, JSON, CSV or simplified
+HTML, optionally with title, author, date, site name, categories, tags and license.
+It also covers the surrounding tooling: downloading pages, finding feeds and
+sitemaps, and a small focused crawler.
 
 ## Installation
 
@@ -48,31 +89,16 @@ Command line: download `trafilatura-java-0.1.1-cli.jar` from the
 [releases page](https://github.com/danielonet/trafilatura-java/releases) and run it with
 `java -jar` (JDK 21+).
 
-## Building from source
-
-- JDK 21 or newer
-- Nothing else: `./mvnw` and `./gradlew` download Maven or Gradle themselves
-
-```bash
-./mvnw compile       # build the library
-./mvnw test          # run the ported test suites
-./mvnw package       # build the library jar and the self-contained target/*-cli.jar
-```
-
-Or with Gradle, which runs the same tests and builds the same jars under `build/libs/`:
-
-```bash
-./gradlew build      # compile, test, and build the library and *-cli.jar
-./gradlew test -PallTests   # also run the known-deviation and network tests
-```
-
-Dependencies, all fetched by the build: jsoup (HTML parsing), Jaxen (XPath), Jackson
-(JSON), SLF4J (logging), juniversalchardet (charset detection), BouncyCastle (BLAKE2b
-hashes), JUnit 5 (tests).
+The library logs through SLF4J; add the binding your application already uses.
 
 ## Usage
 
 ### As a library
+
+Function and field names stay the same as in Python (`bare_extraction`,
+`extract_metadata`, `max_tree_size`...), so the
+[trafilatura documentation](https://trafilatura.readthedocs.io/) applies, and the
+Python source can be read side by side with this code.
 
 ```java
 import io.github.danielonet.trafilatura.Core;
@@ -112,26 +138,7 @@ cat page.html | java -jar trafilatura-java-0.1.1-cli.jar --json --with-metadata
 
 The options are the same as the Python CLI; run with `--help` for the list.
 
-## Project layout
-
-```
-src/main/java/io/github/danielonet/trafilatura/
-  *.java         the port itself: one class per Python module
-                 (core.py -> Core, main_extractor.py -> MainExtractor, ...)
-  lxml/          a small lxml-compatible element tree (text/tail model, live iteration,
-                 XPath 1.0 via Jaxen, tostring, HTML parsing via jsoup)
-  compat/        Python semantics with no direct Java equivalent: truthiness, str methods,
-                 re module, json, configparser, argparse, difflib, robotparser, tuples
-  courlan/       stand-in for the Python courlan package (URL handling)
-  htmldate/      minimal stand-in for htmldate (publication dates)
-  justext/       stub for jusText (fallback extractor)
-src/main/resources/io/github/danielonet/trafilatura/   settings.cfg, TEI DTD
-src/test/java/io/github/danielonet/trafilatura/tests/  ported pytest suites (JUnit 5)
-src/test/java/io/github/danielonet/trafilatura/docs/   documentation build test (skipped without Sphinx)
-src/test/resources/   test pages, cached real-world pages
-```
-
-## Configuration
+### Configuration
 
 Defaults come from `settings.cfg`, the same file as the Python version. Use your own
 file with `Settings.use_config("my.cfg")`, then `Core.kw().config(...)`, or with
@@ -152,41 +159,71 @@ file with `Settings.use_config("my.cfg")`, then `Core.kw().config(...)`, or with
 - **XPath attribute unions.** In `@id|@class`, Jaxen orders attributes by name, while
   lxml uses their order in the source.
 
-## General rules for working on the port
+The tests that fail because of these differences are tagged `known-deviation`; run
+them with `./gradlew test -PallTests` or `./mvnw test -Dsurefire.excludedGroups=`.
 
-1. **Follow the Python source.** Keep Python names, comments and control flow, so a
-   diff against the upstream module stays readable. When upstream changes, port the
-   change in the same place.
-2. **Keyword arguments become overloads or a `Kwargs` builder.** Functions with a few
-   defaults get telescoping overloads. Keyword-heavy ones (`extract`, `Extractor`) get
-   a `kw()` builder whose setters use the Python parameter names.
-3. **Use the compat helpers for Python semantics.** For example: `Py.truthy`,
-   `Py.strip` (Python whitespace includes U+00A0), `Py.isdigit` (false for `""`),
-   `Py.str(null)` (prints `"None"`), and `Re.match` (anchored like `re.match`).
-4. **Regexes need Python semantics.** Add `UNICODE_CHARACTER_CLASS` where the pattern
-   uses `\w`, `\b` or `\d`; use `$1` in replacements; use `{0,n}` instead of `{,n}`.
-5. **Watch for null keys.** `List.of`/`Set.of`/`Map.of` throw on a null lookup, while
-   Python just returns False or None. Guard lookups of attribute values, which may be
-   absent.
-6. **Element iteration is live, as in lxml.** `iter()` computes the next node lazily.
-   Use `.list()` where the Python code wraps the call in `list(...)`.
-7. **Module-level names are public.** Python has no access control, and the tests call
-   `_private` helpers.
-8. **Test seams replace monkeypatching.** Tests swap behaviour through public static
-   hooks: `Downloads.SEND_REQUEST`, `Downloads.IS_LIVE_PAGE`, the `SLEEP` hooks in
-   Feeds, Sitemaps and Spider, and `Settings.USE_CONFIG_HOOK`. `Conftest` installs them
-   for every test, as pytest's autouse fixtures did.
-9. **Test ports keep the same test names and assertions.** `assert a == b` becomes
-   `assertEquals(b, a)`, `parametrize` becomes `@ParameterizedTest`, and strict
-   `xfail` becomes `assertThrows`.
+## Building from source
 
-## Status
+JDK 21 or newer is all you need: `./mvnw` and `./gradlew` download Maven or Gradle
+themselves.
 
-- The library and CLI are fully ported and compile.
-- Test suites ported so far, all passing: deduplication, filters, repeated output
-  (3,634 cases), XML/TEI and baseline. The remaining pytest modules (metadata, JSON
-  metadata, unit, real-world, downloads, feeds, sitemaps, spider, CLI, evaluation
-  scripts) are still to be ported.
+```bash
+./mvnw package       # compile, test, and build the library jar and target/*-cli.jar
+./gradlew build      # the same with Gradle, jars under build/libs/
+```
+
+Dependencies, all fetched by the build: jsoup (HTML parsing), Jaxen (XPath), Jackson
+(JSON), SLF4J (logging), juniversalchardet (charset detection), BouncyCastle (BLAKE2b
+hashes), JUnit 5 (tests).
+
+### Project layout
+
+```
+src/main/java/io/github/danielonet/trafilatura/
+  *.java         the port itself: one class per Python module
+                 (core.py -> Core, main_extractor.py -> MainExtractor, ...)
+  lxml/          a small lxml-compatible element tree (text/tail model, live iteration,
+                 XPath 1.0 via Jaxen, tostring, HTML parsing via jsoup)
+  compat/        Python semantics with no direct Java equivalent: truthiness, str methods,
+                 re module, json, configparser, argparse, difflib, robotparser, tuples
+  courlan/       stand-in for the Python courlan package (URL handling)
+  htmldate/      minimal stand-in for htmldate (publication dates)
+  justext/       stub for jusText (fallback extractor)
+src/main/resources/io/github/danielonet/trafilatura/   settings.cfg, TEI DTD
+src/test/java/io/github/danielonet/trafilatura/tests/  ported pytest suites (JUnit 5)
+src/test/java/io/github/danielonet/trafilatura/docs/   documentation build test (skipped without Sphinx)
+src/test/resources/   test pages, cached real-world pages
+```
+
+## Contributing
+
+Bug reports with the URL of a page that extracts badly are the most useful
+contribution. To work on the code, read [CONTRIBUTING.md](CONTRIBUTING.md) first: the
+port follows the Python source closely, and it lists the conventions that keep it that
+way. Questions go to [Discussions](https://github.com/danielonet/trafilatura-java/discussions).
+
+## Credits and citation
+
+The algorithm, the heuristics, the settings and the test suites are the work of
+Adrien Barbaresi and the [trafilatura contributors](https://github.com/adbar/trafilatura/graphs/contributors);
+this project only carries them over to the JVM. The port started from a machine
+translation (Pyrite) and was then rewritten by hand to compile and to behave like the
+Python original.
+
+If you use it in research, cite the trafilatura paper,
+[Barbaresi (2021), ACL System Demonstrations](https://aclanthology.org/2021.acl-demo.15/):
+
+```bibtex
+@inproceedings{barbaresi-2021-trafilatura,
+  title     = {Trafilatura: A Web Scraping Library and Command-Line Tool for Text Discovery and Extraction},
+  author    = {Barbaresi, Adrien},
+  booktitle = {Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing: System Demonstrations},
+  pages     = {122--131},
+  publisher = {Association for Computational Linguistics},
+  year      = {2021},
+  doi       = {10.18653/v1/2021.acl-demo.15}
+}
+```
 
 ## License
 
