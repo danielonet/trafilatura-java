@@ -51,5 +51,5 @@ jobs:
       - name: GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: target/trafilatura-java-*.jar
+          files: target/trafilatura-java-*-cli.jar
           generate_release_notes: true

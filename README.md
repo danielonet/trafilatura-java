@@ -26,7 +26,29 @@ compile and to behave like the Python original. Function and field names deliber
 stay the same as in Python (`bare_extraction`, `extract_metadata`, `max_tree_size`...),
 so the Python documentation and source can be read side by side with this code.
 
-## Requirements and setup
+## Installation
+
+Maven:
+
+```xml
+<dependency>
+    <groupId>io.github.danielonet</groupId>
+    <artifactId>trafilatura-java</artifactId>
+    <version>0.1.1</version>
+</dependency>
+```
+
+Gradle:
+
+```groovy
+implementation 'io.github.danielonet:trafilatura-java:0.1.1'
+```
+
+Command line: download `trafilatura-java-0.1.1-cli.jar` from the
+[releases page](https://github.com/danielonet/trafilatura-java/releases) and run it with
+`java -jar` (JDK 21+).
+
+## Building from source
 
 - JDK 21 or newer
 - Maven 3.9+
@@ -34,7 +56,7 @@ so the Python documentation and source can be read side by side with this code.
 ```bash
 mvn compile          # build the library
 mvn test             # run the ported test suites
-mvn package          # build target/trafilatura-java-0.1.0-SNAPSHOT.jar
+mvn package          # build the library jar and the self-contained target/*-cli.jar
 ```
 
 Dependencies, all fetched by Maven: jsoup (HTML parsing), Jaxen (XPath), Jackson
@@ -76,10 +98,9 @@ Document meta = Metadata.extract_metadata(html);
 ### Command line
 
 ```bash
-CP="target/classes:$(mvn -q dependency:build-classpath -Dmdep.outputFile=/dev/stdout)"
-java -cp "$CP" io.github.danielonet.trafilatura.Cli --version
-java -cp "$CP" io.github.danielonet.trafilatura.Cli -u https://example.org/article --markdown
-cat page.html | java -cp "$CP" io.github.danielonet.trafilatura.Cli --json --with-metadata
+java -jar trafilatura-java-0.1.1-cli.jar --version
+java -jar trafilatura-java-0.1.1-cli.jar -u https://example.org/article --markdown
+cat page.html | java -jar trafilatura-java-0.1.1-cli.jar --json --with-metadata
 ```
 
 The options are the same as the Python CLI; run with `--help` for the list.
