@@ -30,9 +30,9 @@ jobs:
           server-password: CENTRAL_TOKEN_PASSWORD
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
       - name: Set version from tag
-        run: mvn -B versions:set -DnewVersion="${GITHUB_REF_NAME#v}" -DgenerateBackupPoms=false
+        run: ./mvnw -B -V versions:set -DnewVersion="${GITHUB_REF_NAME#v}" -DgenerateBackupPoms=false
       - name: Build, sign and publish
-        run: mvn -B -P release clean deploy
+        run: ./mvnw -B -P release clean deploy
         env:
           CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}

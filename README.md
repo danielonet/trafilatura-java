@@ -54,9 +54,9 @@ Command line: download `trafilatura-java-0.1.1-cli.jar` from the
 - Maven 3.9+
 
 ```bash
-mvn compile          # build the library
-mvn test             # run the ported test suites
-mvn package          # build the library jar and the self-contained target/*-cli.jar
+./mvnw compile       # build the library
+./mvnw test          # run the ported test suites
+./mvnw package       # build the library jar and the self-contained target/*-cli.jar
 ```
 
 Dependencies, all fetched by Maven: jsoup (HTML parsing), Jaxen (XPath), Jackson
