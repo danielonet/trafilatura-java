@@ -1,0 +1,6 @@
+"Benchmark","Mode","Threads","Samples","Score","Score Error (99.9%)","Unit","Param: corpus","Param: tool"
+"io.github.danielonet.trafilatura.benchmark.Speed.extract","thrpt",1,3,31.445857,37.556994,"ops/s",data/trafilatura-v2.3.1/tests,"trafilatura-java fast"
+"io.github.danielonet.trafilatura.benchmark.Speed.extract","thrpt",1,3,29.162169,13.672333,"ops/s",data/trafilatura-v2.3.1/tests,trafilatura-java
+"io.github.danielonet.trafilatura.benchmark.Speed.extract","thrpt",1,3,119.765121,25.301963,"ops/s",data/trafilatura-v2.3.1/tests,boilerpipe
+"io.github.danielonet.trafilatura.benchmark.Speed.extract","thrpt",1,3,60.971710,25.496520,"ops/s",data/trafilatura-v2.3.1/tests,readability4j
+"io.github.danielonet.trafilatura.benchmark.Speed.extract","thrpt",1,3,314.010707,31.987950,"ops/s",data/trafilatura-v2.3.1/tests,"jsoup text"

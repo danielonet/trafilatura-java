@@ -69,3 +69,9 @@ Thumbs.db
 
 # Pyrite tool metadata
 .pyrite/
+
+# Benchmark: downloaded corpus, Python venv, per-page outputs (text from third-party pages)
+benchmark/data/
+benchmark/python/.venv/
+benchmark/results/outputs/
+__pycache__/

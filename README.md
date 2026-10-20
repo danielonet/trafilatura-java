@@ -67,6 +67,27 @@ HTML, optionally with title, author, date, site name, categories, tags and licen
 It also covers the surrounding tooling: downloading pages, finding feeds and
 sitemaps, and a small focused crawler.
 
+## Benchmark
+
+On trafilatura's own 990-page evaluation set, scored with upstream's evaluation code,
+trafilatura-java matches Python trafilatura's accuracy to within 0.003 F1 and runs 1.5×
+faster on one thread. It is more accurate than the extractors already on the JVM.
+
+![F1 by tool on trafilatura's evaluation set](benchmark/results/f1.svg)
+
+| Tool | Precision | Recall | F1 | Pages/s (1 thread) |
+| --- | --- | --- | --- | --- |
+| Python trafilatura 2.3.1 | 0.907 | 0.946 | 0.926 | 19.3 |
+| **trafilatura-java** | 0.908 | 0.939 | **0.923** | **29.8** |
+| **trafilatura-java**, `fast` | 0.909 | 0.934 | **0.921** | **32.5** |
+| Readability4J 1.0.8 | 0.868 | 0.905 | 0.886 | 57.3 |
+| boilerpipe 1.2.3 | 0.846 | 0.856 | 0.851 | 102.5 |
+
+Speeds are from a 2012 laptop CPU; compare the ratios, not the absolute numbers. In
+`fast` mode, 96.4% of pages give byte-identical output in Java and Python. Method, all
+modes, multi-threaded throughput, memory and the pages where the two differ:
+[benchmark/BENCHMARK.md](benchmark/BENCHMARK.md). Rerun it with `benchmark/run.sh`.
+
 ## Installation
 
 Maven:

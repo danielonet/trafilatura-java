@@ -1,0 +1,14 @@
+tool,language,library,version,precision,recall,accuracy,f1,pages_per_second,alloc_mean_kb,alloc_p95_kb,errors,empty
+trafilatura,python,trafilatura,2.3.1,0.9065,0.9465,0.9246,0.9261,19.3,,,0,0
+trafilatura-java,java,trafilatura-java,0.1.1-SNAPSHOT,0.9079,0.9390,0.9221,0.9232,29.78,13197,33543,0,0
+trafilatura precision,python,trafilatura,2.3.1,0.9235,0.9207,0.9224,0.9221,18.13,,,0,2
+trafilatura-java fast,java,trafilatura-java,0.1.1-SNAPSHOT,0.9089,0.9336,0.9202,0.9211,32.52,10893,28031,0,0
+trafilatura fast,python,trafilatura,2.3.1,0.9072,0.9339,0.9194,0.9204,26.15,,,0,0
+trafilatura recall,python,trafilatura,2.3.1,0.8978,0.9434,0.9182,0.9200,28.89,,,0,0
+trafilatura-java precision,java,trafilatura-java,0.1.1-SNAPSHOT,0.9246,0.9146,0.9202,0.9196,28.29,14737,36455,0,2
+trafilatura-java recall,java,trafilatura-java,0.1.1-SNAPSHOT,0.8989,0.9404,0.9175,0.9192,38.07,9988,24600,0,0
+readability4j,java,net.dankito.readability4j:readability4j,1.0.8,0.8681,0.9051,0.8841,0.8862,57.27,5495,14814,1,1
+boilerpipe,java,com.robbypond:boilerpipe,1.2.3,0.8465,0.8556,0.8506,0.8510,102.54,4514,10295,0,3
+jsoup text,java,org.jsoup:jsoup,1.18.3,0.5315,0.9912,0.5599,0.6920,311.6,1527,4259,0,0
+everything (whole page),-,-,-,0.5279,0.9061,0.5491,0.6672,,,,,
+nothing,-,-,-,0.0000,0.0000,0.5013,0.0000,,,,,

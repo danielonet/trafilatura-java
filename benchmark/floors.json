@@ -1,0 +1,5 @@
+{
+  "_comment": "Lowest accepted F1 for trafilatura-java on the evaluation corpus, checked by python/gate.py. Measured 2026-10-20: fast 0.9211, default 0.9232; floors leave 0.0005 for noise, as upstream's eval_gate does.",
+  "trafilatura-java fast": 0.9206,
+  "trafilatura-java": 0.9227
+}
