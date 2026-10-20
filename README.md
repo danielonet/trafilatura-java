@@ -144,6 +144,23 @@ Defaults come from `settings.cfg`, the same file as the Python version. Use your
 file with `Settings.use_config("my.cfg")`, then `Core.kw().config(...)`, or with
 `--config-file` on the command line. Values not set in your file keep their defaults.
 
+### Thread safety
+
+`extract`, `bare_extraction` and `fetch_url` are safe to call from several threads at
+once. Each call builds its own document tree, and the shared state (compiled XPath
+expressions, the HTTP client, the deduplication cache) is either immutable or
+synchronized. `ConcurrencyTests` checks that concurrent calls return the same output as
+sequential ones.
+
+Two things are shared on purpose, as in Python:
+
+- With `deduplicate(true)`, all calls share one cache (`Deduplication.LRU_TEST`), so a
+  paragraph seen by one thread counts as a duplicate in another. To keep it per
+  document or per tenant, pass your own `new Deduplication.LRUCache(4096)` instead of
+  `true`.
+- The public static hooks (`Downloads.SEND_REQUEST`, `Settings.USE_CONFIG_HOOK`, the
+  `SLEEP` hooks...) exist for tests. Don't reassign them while extractions are running.
+
 ## Differences from the Python version
 
 - **Dependencies replaced by stand-ins.** courlan is ported in simplified form: no
