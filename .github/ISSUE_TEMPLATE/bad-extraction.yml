@@ -41,6 +41,6 @@ body:
     id: version
     attributes:
       label: trafilatura-java version
-      placeholder: "0.1.1"
+      placeholder: "0.1.2"
     validations:
       required: true
