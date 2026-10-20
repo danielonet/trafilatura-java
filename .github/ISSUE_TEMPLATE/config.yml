@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/danielonet/trafilatura-java/discussions
+    about: Ask how to use the library or discuss an idea before opening an issue.
+  - name: Problems that also happen in Python trafilatura
+    url: https://github.com/adbar/trafilatura/issues
+    about: If Python trafilatura 2.3.1 has the same problem, report it upstream.

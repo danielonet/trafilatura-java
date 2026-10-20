@@ -1,0 +1,46 @@
+name: Page extracts badly
+description: The text, metadata or format output for a page is wrong or missing
+labels: ["bug"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Page URL
+      description: If the page is not public, attach the saved HTML instead.
+      placeholder: https://example.org/article
+    validations:
+      required: true
+  - type: textarea
+    id: call
+    attributes:
+      label: What you ran
+      description: The code or CLI command, including options such as output format or favor_precision.
+      render: java
+      placeholder: Core.extract(html, Core.kw().output_format("markdown").with_metadata(true))
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong
+      description: Missing paragraphs, boilerplate kept, wrong title or date, and so on. Paste the relevant part of the output.
+    validations:
+      required: true
+  - type: dropdown
+    id: python
+    attributes:
+      label: Does Python trafilatura 2.3.1 get it right?
+      description: "If Python is right and Java is wrong, it is a porting bug. Check with: pip install trafilatura==2.3.1"
+      options:
+        - Not checked
+        - "Yes, Python output is correct"
+        - "No, Python has the same problem"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: trafilatura-java version
+      placeholder: "0.1.1"
+    validations:
+      required: true

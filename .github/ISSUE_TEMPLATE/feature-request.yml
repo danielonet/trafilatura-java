@@ -1,0 +1,16 @@
+name: Feature or porting gap
+description: Something Python trafilatura does that this port does not, or a new feature
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What you need
+      description: For a porting gap, name the upstream module or function.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Your use case
+      description: What you are building and how this would help.
