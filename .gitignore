@@ -36,6 +36,11 @@ buildNumber.properties
 # Keep the Maven wrapper jar if one is added
 !.mvn/wrapper/maven-wrapper.jar
 
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
 # IntelliJ IDEA
 .idea/
 *.iml

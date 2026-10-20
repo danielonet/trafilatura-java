@@ -51,7 +51,7 @@ Command line: download `trafilatura-java-0.1.1-cli.jar` from the
 ## Building from source
 
 - JDK 21 or newer
-- Maven 3.9+
+- Nothing else: `./mvnw` and `./gradlew` download Maven or Gradle themselves
 
 ```bash
 ./mvnw compile       # build the library
@@ -59,7 +59,14 @@ Command line: download `trafilatura-java-0.1.1-cli.jar` from the
 ./mvnw package       # build the library jar and the self-contained target/*-cli.jar
 ```
 
-Dependencies, all fetched by Maven: jsoup (HTML parsing), Jaxen (XPath), Jackson
+Or with Gradle, which runs the same tests and builds the same jars under `build/libs/`:
+
+```bash
+./gradlew build      # compile, test, and build the library and *-cli.jar
+./gradlew test -PallTests   # also run the known-deviation and network tests
+```
+
+Dependencies, all fetched by the build: jsoup (HTML parsing), Jaxen (XPath), Jackson
 (JSON), SLF4J (logging), juniversalchardet (charset detection), BouncyCastle (BLAKE2b
 hashes), JUnit 5 (tests).
 
