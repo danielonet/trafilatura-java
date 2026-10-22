@@ -9,6 +9,11 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -481,6 +486,99 @@ public final class Courlan {
         return url;
     }
 
+
+    private static final Pattern TRACKERS_RE = Pattern.compile(
+            "^(?:dc|fbc|gc|twc|yc|ysc)lid|"
+                    + "^(?:click|gbra|msclk|igsh|partner|wbra)id|"
+                    + "^(?:ads?|mc|ga|gs|itm|mkt|ml|mtm|oly|pk|utm|vero)_|"
+                    + "(?:\\b|_)(?:aff|affi|affiliate|campaign|cl?id|eid|ga|gl|"
+                    + "kwd|keyword|medium|ref|referr?er|session|source|uid|xtor)",
+            Pattern.UNICODE_CHARACTER_CLASS);
+
+    private static final Set<String> ALLOWED_PARAMS = Set.of(
+            "aid", "article_id", "artnr", "id", "itemid", "objectid",
+            "p", "page", "pagenum", "page_id", "pid", "post", "postid", "product_id");
+
+    private static final Set<String> LANG_PARAMS = Set.of("lang", "language");
+
+    private static final Map<String, Set<String>> TARGET_LANGS = Map.of(
+            "de", Set.of("de", "deutsch", "ger", "german"),
+            "en", Set.of("en", "english", "eng"));
+
+    /**
+     * Java port of courlan.clean.clean_query.
+     * Strip unwanted query elements and encode the remaining parameters.
+     */
+    public static String clean_query(String querystring, boolean strict, String language) {
+        if (querystring == null || querystring.isEmpty()) {
+            return "";
+        }
+
+        // Python parse_qs groups values by decoded key and ignores blank values.
+        Map<String, List<String>> query = new TreeMap<>();
+        for (String item : querystring.split("&")) {
+            if (item.isEmpty()) {
+                continue;
+            }
+            int equals = item.indexOf('=');
+            String rawKey = equals < 0 ? item : item.substring(0, equals);
+            String rawValue = equals < 0 ? "" : item.substring(equals + 1);
+
+            String key = decodeQueryComponent(rawKey);
+            String value = decodeQueryComponent(rawValue);
+            if (value.isEmpty()) {
+                continue;
+            }
+            query.computeIfAbsent(key, ignored -> new ArrayList<>()).add(value);
+        }
+
+        List<String> result = new ArrayList<>();
+        Set<String> targetValues = language == null ? null : TARGET_LANGS.get(language);
+
+        for (Map.Entry<String, List<String>> entry : query.entrySet()) {
+            String key = entry.getKey();
+            String teststr = key.toLowerCase(Locale.ROOT);
+
+            if (strict) {
+                if (!ALLOWED_PARAMS.contains(teststr) && !LANG_PARAMS.contains(teststr)) {
+                    continue;
+                }
+            } else if (TRACKERS_RE.matcher(teststr).find()) {
+                continue;
+            }
+
+            if (targetValues != null && LANG_PARAMS.contains(teststr)
+                    && !targetValues.contains(entry.getValue().get(0))) {
+                throw new IllegalArgumentException("Query language does not match: " + key);
+            }
+
+            for (String value : entry.getValue()) {
+                result.add(encodeQueryComponent(key) + "=" + encodeQueryComponent(value));
+            }
+        }
+
+        return String.join("&", result);
+    }
+
+    public static String clean_query(String querystring, boolean strict) {
+        return clean_query(querystring, strict, null);
+    }
+
+    private static String decodeQueryComponent(String value) {
+        // Python's unquote_plus tolerates malformed percent escapes.
+        String tolerantValue = value.replaceAll(
+                "%(?![0-9a-fA-F]{2})", "%25");
+        return URLDecoder.decode(tolerantValue, StandardCharsets.UTF_8);
+    }
+
+    private static String encodeQueryComponent(String value) {
+        // Match Python urllib.parse.urlencode / quote_plus encoding.
+        return URLEncoder.encode(value, StandardCharsets.UTF_8)
+                .replace("*", "%2A")
+                .replace("%7E", "~");
+    }
+
+
     /** Lowercase scheme and host, strip default ports, drop fragments in strict mode. */
     public static String normalize_url(String url, boolean strict, String language, boolean trailing_slash) {
         SplitResult parsed = _parse(url);
@@ -497,7 +595,7 @@ public final class Courlan {
             netloc = netloc.replaceFirst(":\\d+$", "");
         }
         String newpath = parsed.path();
-        String newquery = parsed.query();
+        String newquery = clean_query(parsed.query(), strict, language);
         if (!newquery.isEmpty() && newpath.isEmpty()) {
             newpath = "/";
         } else if (!trailing_slash && newquery.isEmpty() && newpath.length() > 1 && newpath.endsWith("/")) {

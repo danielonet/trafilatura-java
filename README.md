@@ -185,11 +185,13 @@ Two things are shared on purpose, as in Python:
 
 ## Differences from the Python version
 
-- **Dependencies replaced by stand-ins.** courlan is ported in simplified form: no
-  tracker removal, no punycode, no public-suffix list, and no URL language heuristics.
-  htmldate only reads meta tags, JSON-LD, `<time>` elements and the URL. jusText is a
-  stub, so its fallback never fires. Expect differences in dates, domains and some
-  borderline extractions.
+## Differences from the Python version
+
+- **Dependencies replaced by stand-ins.** courlan is ported in simplified form:
+  URL query cleaning removes common tracking parameters and supports strict parameter
+  allowlisting and language-parameter validation. Punycode decoding, public-suffix-list support,
+  and URL language heuristics remain unsupported. htmldate only reads meta tags, JSON-LD, `<title>` elements and the URL.
+  jusText is a stub, so its fallback never fires. Expect differences in dates, domains and some borderline extractions.
 - **HTML parsing.** HTML is parsed with jsoup (HTML5 rules) instead of libxml2, so tree
   shapes can differ on malformed markup.
 - **Optional Python extras are absent.** Language detection (py3langid), pycurl,
