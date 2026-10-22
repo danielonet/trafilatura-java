@@ -48,7 +48,7 @@ Explicit is better than implicit.
 calling Python trafilatura through a subprocess or a sidecar service. This library
 runs in the same process, with the same algorithm and the same `settings.cfg`.
 
-> **Status (v0.1.2)**
+> **Status (v0.1.3)**
 >
 > - **Fidelity:** follows trafilatura 2.3.1 module by module. The library and the CLI
 >   are fully ported.
@@ -97,17 +97,17 @@ Maven:
 <dependency>
     <groupId>io.github.danielonet</groupId>
     <artifactId>trafilatura-java</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
 </dependency>
 ```
 
 Gradle:
 
 ```groovy
-implementation 'io.github.danielonet:trafilatura-java:0.1.2'
+implementation 'io.github.danielonet:trafilatura-java:0.1.3'
 ```
 
-Command line: download `trafilatura-java-0.1.2-cli.jar` from the
+Command line: download `trafilatura-java-0.1.3-cli.jar` from the
 [releases page](https://github.com/danielonet/trafilatura-java/releases) and run it with
 `java -jar` (JDK 21+).
 
@@ -153,9 +153,9 @@ Document meta = Metadata.extract_metadata(html);
 ### Command line
 
 ```bash
-java -jar trafilatura-java-0.1.2-cli.jar --version
-java -jar trafilatura-java-0.1.2-cli.jar -u https://example.org/article --markdown
-cat page.html | java -jar trafilatura-java-0.1.2-cli.jar --json --with-metadata
+java -jar trafilatura-java-0.1.3-cli.jar --version
+java -jar trafilatura-java-0.1.3-cli.jar -u https://example.org/article --markdown
+cat page.html | java -jar trafilatura-java-0.1.3-cli.jar --json --with-metadata
 ```
 
 The options are the same as the Python CLI; run with `--help` for the list.
