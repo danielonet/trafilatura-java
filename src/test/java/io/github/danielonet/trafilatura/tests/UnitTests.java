@@ -2119,7 +2119,6 @@ public class UnitTests {
 
     /** the recall escalation also tries justext, which reaches content the rule-based retry     cannot: 'sidebar'-classed divs are discarded by both the main extractor/recall retry     (OVERALL_DISCARD_XPATH) and readability (unlikelyCandidatesRe), but justext classifies     them on paragraph density alone and keeps them. */
     @Test
-    @Tag("known-deviation") // needs jusText, a stub in the Java port
     void test_recall_escalation_justext() {
         String messages = T.joinRange("", 0, 8, i -> "<div class='sidebar'>Message number " + (i) + " contains substantial discussion content with plenty of genuine words and enough length to be recognized as real text by a paragraph density classifier, not boilerplate at all today, said the author.</div>");
         String doc = "<html><body>" + (_ESCALATION_INTRO) + (messages) + "</body></html>";
@@ -3119,8 +3118,8 @@ public class UnitTests {
     }
 
     // ------------------------------------------------------------------ known deviations
-    // Assertions that hold in Python only through libxml2's HTML parser, the full htmldate and jusText
-    // packages or charset_normalizer. Excluded by default, run with -Dsurefire.excludedGroups=
+    // Assertions that hold in Python only through libxml2's HTML parser, the full htmldate
+    // package or charset_normalizer. Excluded by default, run with -Dsurefire.excludedGroups=
 
     /** charset_normalizer finds gb18030 in 7 characters; juniversalchardet needs a longer sample. */
     @Test
@@ -3177,16 +3176,14 @@ public class UnitTests {
         assertEquals("<table>" + expected + "</table>", Etree.tostring(_handle_table(table, recall), "unicode"));
     }
 
-    /** On a forum thread the posts are recovered by jusText, a stub in the Java port. */
+    /** On a forum thread the posts are recovered by jusText. */
     @Test
-    @Tag("known-deviation")
     void test_recall_escalation_justext_forum_posts_kept() {
         test_recall_escalation_justext_comment_scoping(_DFP_JSONLD, true, false);
     }
 
-    /** <div> replies are not captured as comments, they come back through jusText, a stub in the Java port. */
+    /** <div> replies are not captured as comments, they come back through jusText. */
     @Test
-    @Tag("known-deviation")
     void test_recall_escalation_no_comment_doubling_div() {
         test_recall_escalation_no_comment_doubling("div");
     }

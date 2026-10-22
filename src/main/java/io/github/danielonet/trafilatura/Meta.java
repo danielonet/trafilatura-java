@@ -3,7 +3,6 @@ package io.github.danielonet.trafilatura;
 
 import io.github.danielonet.trafilatura.courlan.Courlan;
 import io.github.danielonet.trafilatura.htmldate.Htmldate;
-import io.github.danielonet.trafilatura.justext.Justext;
 
 /** Meta-functions to be applied module-wide. */
 public final class Meta {
@@ -15,8 +14,7 @@ public final class Meta {
      * This may release some memory.
      */
     public static void reset_caches() {
-        // justext
-        Justext.clear_caches();
+        // justext: no caches
         // handles htmldate and charset_normalizer
         Htmldate.reset_caches();
         // courlan

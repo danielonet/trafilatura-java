@@ -54,12 +54,12 @@ runs in the same process, with the same algorithm and the same `settings.cfg`.
 >   are fully ported.
 > - **Tests:** 13 of the upstream pytest modules are ported and pass, 4,194 tests in
 >   all: baseline, CLI, deduplication, downloads, feeds, filters, JSON metadata,
->   metadata, repeated output, sitemaps, spider, unit and XML/TEI. 11 tests are tagged
+>   metadata, repeated output, sitemaps, spider, unit and XML/TEI. 8 tests are tagged
 >   as known deviations (causes below) and 2 need network access; both groups are
 >   skipped by default. The real-world tests and the evaluation scripts are not
 >   ported yet.
-> - **Known gaps:** courlan and htmldate are simplified, jusText is a stub (its
->   fallback never fires), there is no language detection, and HTML is parsed with
+> - **Known gaps:** courlan and htmldate are simplified, there is no
+>   language detection, and HTML is parsed with
 >   jsoup instead of libxml2. See [Differences from the Python version](#differences-from-the-python-version).
 
 It returns the text as plain text, Markdown, XML, XML-TEI, JSON, CSV or simplified
@@ -191,7 +191,8 @@ Two things are shared on purpose, as in Python:
   URL query cleaning removes common tracking parameters and supports strict parameter
   allowlisting and language-parameter validation. Punycode decoding, public-suffix-list support,
   and URL language heuristics remain unsupported. htmldate only reads meta tags, JSON-LD, `<title>` elements and the URL.
-  jusText is a stub, so its fallback never fires. Expect differences in dates, domains and some borderline extractions.
+  jusText is the real Java port
+  (`io.github.danielonet:justext`). Expect differences in dates, domains and some borderline extractions.
 - **HTML parsing.** HTML is parsed with jsoup (HTML5 rules) instead of libxml2, so tree
   shapes can differ on malformed markup.
 - **Optional Python extras are absent.** Language detection (py3langid), pycurl,
@@ -229,7 +230,6 @@ src/main/java/io/github/danielonet/trafilatura/
                  re module, json, configparser, argparse, difflib, robotparser, tuples
   courlan/       stand-in for the Python courlan package (URL handling)
   htmldate/      minimal stand-in for htmldate (publication dates)
-  justext/       stub for jusText (fallback extractor)
 src/main/resources/io/github/danielonet/trafilatura/   settings.cfg, TEI DTD
 src/test/java/io/github/danielonet/trafilatura/tests/  ported pytest suites (JUnit 5)
 src/test/java/io/github/danielonet/trafilatura/docs/   documentation build test (skipped without Sphinx)
@@ -272,6 +272,6 @@ Apache License 2.0, the same as upstream trafilatura. See [LICENSE](LICENSE) and
 [NOTICE](NOTICE).
 
 The port is derived from trafilatura, courlan and htmldate (Apache-2.0, Adrien
-Barbaresi). The jusText stand-in follows the API of jusText (BSD-2-Clause, see
-[licenses/LICENSE-jusText.txt](licenses/LICENSE-jusText.txt)). The jar ships these
-files under `META-INF/`.
+Barbaresi). jusText (BSD-2-Clause, see
+[licenses/LICENSE-jusText.txt](licenses/LICENSE-jusText.txt)) is used through its Java port,
+`io.github.danielonet:justext`. The jar ships these files under `META-INF/`.

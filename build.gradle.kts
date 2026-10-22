@@ -24,6 +24,7 @@ val lombokVersion = "1.18.36"
 
 dependencies {
     implementation("org.jsoup:jsoup:1.18.3")
+    implementation("io.github.danielonet:justext:3.0.2")
     implementation("jaxen:jaxen:2.0.0")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")

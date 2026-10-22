@@ -7,7 +7,7 @@ Thanks for helping. Most useful, in order:
    not, say so: that is a porting bug.
 2. **Ported tests.** The real-world tests (`tests/realworld_tests.py`) and the evaluation
    scripts are not ported yet.
-3. **Fixes to the stand-ins.** courlan, htmldate and jusText are simplified; see
+3. **Fixes to the stand-ins.** courlan and htmldate are simplified; see
    "Differences from the Python version" in the README.
 
 Questions and ideas go to [Discussions](https://github.com/danielonet/trafilatura-java/discussions).
@@ -24,7 +24,7 @@ JDK 21 is all you need. Either build works; CI runs both.
 ```
 
 Tests tagged `known-deviation` fail on purpose: their expectations need something this
-port does not have (libxml2 parsing, full htmldate, jusText). Leave the tag and the
+port does not have (libxml2 parsing, full htmldate). Leave the tag and the
 comment explaining it when you add one.
 
 ## General rules for working on the port

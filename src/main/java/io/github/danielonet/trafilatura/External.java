@@ -5,14 +5,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.github.danielonet.justext.justext.Core;
+import io.github.danielonet.justext.justext.Paragraph;
+import io.github.danielonet.justext.justext.Utils;
 import io.github.danielonet.trafilatura.compat.Pair;
 import io.github.danielonet.trafilatura.compat.Py;
-import io.github.danielonet.trafilatura.justext.Justext;
-import io.github.danielonet.trafilatura.justext.Justext.Paragraph;
-import io.github.danielonet.trafilatura.justext.Justext.ParagraphMaker;
 import io.github.danielonet.trafilatura.lxml.Element;
 import io.github.danielonet.trafilatura.lxml.Etree;
 import io.github.danielonet.trafilatura.Settings.Extractor;
@@ -161,8 +162,8 @@ public final class External {
     /** Retrieve and return the content of all JusText stoplists. */
     public static Set<String> jt_stoplist_init() {
         Set<String> words = new HashSet<>();
-        for (String language : Justext.get_stoplists()) {
-            words.addAll(Justext.get_stoplist(language));
+        for (String language : Utils.getStoplists()) {
+            words.addAll(Utils.getStoplist(language));
         }
         JT_STOPLIST = words;
         return JT_STOPLIST;
@@ -175,23 +176,24 @@ public final class External {
         // determine language
         Set<String> justext_stoplist;
         if (target_language != null && JUSTEXT_LANGUAGES.containsKey(target_language)) {
-            justext_stoplist = Justext.get_stoplist(JUSTEXT_LANGUAGES.get(target_language));
+            justext_stoplist = Utils.getStoplist(JUSTEXT_LANGUAGES.get(target_language));
         } else {
             justext_stoplist = JT_STOPLIST != null && !JT_STOPLIST.isEmpty() ? JT_STOPLIST : jt_stoplist_init();
         }
         // extract
         List<Paragraph> paragraphs;
         try {
-            paragraphs = ParagraphMaker.make_paragraphs(tree);
-            Justext.classify_paragraphs(paragraphs, justext_stoplist, 50, 150, 0.1, 0.2, 0.25, true);
-            Justext.revise_paragraph_classification(paragraphs, 150);
+            // jusText walks a jsoup DOM: hand it the serialized tree
+            paragraphs = Core.ParagraphMaker.makeParagraphs(Jsoup.parse(Etree.tostring(tree)));
+            Core.classifyParagraphs(paragraphs, justext_stoplist, 50, 150, 0.1, 0.2, 0.25, true);
+            Core.reviseParagraphClassification(paragraphs, 150);
         } catch (RuntimeException err) {
             LOGGER.error("justext {} {}", err.toString(), url);
             return result_body;
         }
         for (Paragraph paragraph : paragraphs) {
-            if (!paragraph.is_boilerplate) {
-                Etree.SubElement(result_body, "p").text = paragraph.text;
+            if (!paragraph.isBoilerplate()) {
+                Etree.SubElement(result_body, "p").text = paragraph.text();
             }
         }
         return result_body;
